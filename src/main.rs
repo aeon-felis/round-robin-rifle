@@ -5,18 +5,19 @@
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
 
 use bevy::prelude::*;
+use bevy_rapier3d::prelude::{NoUserData, RapierPhysicsPlugin};
+use bevy_tnua::{TnuaPlatformerPlugin, TnuaRapier3dPlugin};
+use round_robin_rifle::GamePlugin;
 
 fn main() {
-    App::new()
-        .add_plugins(DefaultPlugins)
-        .add_startup_system(setup)
-        .run();
-}
+    let mut app = App::new();
+    app.add_plugins(DefaultPlugins);
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(Camera2dBundle::default());
-    commands.spawn(SpriteBundle {
-        texture: asset_server.load("icon.png"),
-        ..Default::default()
-    });
+    app.add_plugin(RapierPhysicsPlugin::<NoUserData>::default());
+    app.add_plugin(TnuaRapier3dPlugin);
+    app.add_plugin(TnuaPlatformerPlugin);
+
+    app.add_plugin(GamePlugin);
+
+    app.run();
 }
