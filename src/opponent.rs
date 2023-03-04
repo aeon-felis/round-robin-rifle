@@ -2,11 +2,18 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use bevy_tnua::{TnuaFreeFallBehavior, TnuaPlatformerBundle, TnuaPlatformerConfig};
 
+use crate::level_reloading::{CleanOnLevelReload, LevelPopulationLabel};
+use crate::menu::AppState;
+
 pub struct OpponentPlugin;
 
 impl Plugin for OpponentPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(setup_opponents);
+        app.add_system_set({
+            SystemSet::on_enter(AppState::LoadLevel)
+                .label(LevelPopulationLabel)
+                .with_system(setup_opponents)
+        });
     }
 }
 
@@ -16,6 +23,7 @@ fn setup_opponents(
     mut material_assets: ResMut<Assets<StandardMaterial>>,
 ) {
     let mut cmd = commands.spawn_empty();
+    cmd.insert(CleanOnLevelReload);
     cmd.insert(PbrBundle {
         mesh: mesh_assets.add(Mesh::from(shape::Capsule {
             radius: 1.0,

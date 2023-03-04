@@ -6,14 +6,20 @@ use bevy_tnua::{
 use leafwing_input_manager::prelude::*;
 
 use crate::camera::CameraFollow;
+use crate::level_reloading::{CleanOnLevelReload, LevelPopulationLabel};
+use crate::menu::AppState;
 
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(InputManagerPlugin::<PlayerAction>::default());
-        app.add_startup_system(setup_player);
-        app.add_system(player_controls);
+        app.add_system_set({
+            SystemSet::on_enter(AppState::LoadLevel)
+                .label(LevelPopulationLabel)
+                .with_system(setup_player)
+        });
+        app.add_system_set(SystemSet::on_update(AppState::Game).with_system(player_controls));
     }
 }
 
@@ -31,6 +37,7 @@ fn setup_player(
     mut material_assets: ResMut<Assets<StandardMaterial>>,
 ) {
     let mut cmd = commands.spawn_empty();
+    cmd.insert(CleanOnLevelReload);
     cmd.insert(PbrBundle {
         mesh: mesh_assets.add(Mesh::from(shape::Capsule {
             radius: 1.0,
@@ -101,7 +108,7 @@ fn player_controls(
 ) {
     for (action_state, mut controls, mut camera_follow) in query.iter_mut() {
         let turn: Vec2 = [
-            (0.2, PlayerAction::TurnWithMouse),
+            (0.1, PlayerAction::TurnWithMouse),
             (2.0, PlayerAction::TurnWithGamepad),
         ]
         .into_iter()
