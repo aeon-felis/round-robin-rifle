@@ -5,6 +5,8 @@ use bevy_tnua::{
 };
 use leafwing_input_manager::prelude::*;
 
+use crate::camera::CameraFollow;
+
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
@@ -19,6 +21,8 @@ impl Plugin for PlayerPlugin {
 enum PlayerAction {
     Run,
     Jump,
+    TurnWithMouse,
+    TurnWithGamepad,
 }
 
 fn setup_player(
@@ -51,7 +55,7 @@ fn setup_player(
             full_speed: 40.0,
             full_jump_height: 4.0,
             up: Vec3::Y,
-            forward: Vec3::X,
+            forward: Vec3::Z,
             float_height: 2.0,
             cling_distance: 1.0,
             spring_strengh: 40.0,
@@ -78,15 +82,39 @@ fn setup_player(
             input_map.insert(DualAxis::left_stick(), PlayerAction::Run);
             input_map.insert(KeyCode::Space, PlayerAction::Jump);
             input_map.insert(GamepadButtonType::South, PlayerAction::Jump);
+            input_map.insert(DualAxis::mouse_motion(), PlayerAction::TurnWithMouse);
+            input_map.insert(DualAxis::right_stick(), PlayerAction::TurnWithGamepad);
             input_map
         },
     });
+
+    cmd.insert(CameraFollow { direction: Vec3::Z });
 }
 
-fn player_controls(mut query: Query<(&ActionState<PlayerAction>, &mut TnuaPlatformerControls)>) {
-    for (action_state, mut controls) in query.iter_mut() {
+fn player_controls(
+    time: Res<Time>,
+    mut query: Query<(
+        &ActionState<PlayerAction>,
+        &mut TnuaPlatformerControls,
+        &mut CameraFollow,
+    )>,
+) {
+    for (action_state, mut controls, mut camera_follow) in query.iter_mut() {
+        let turn: Vec2 = [
+            (0.2, PlayerAction::TurnWithMouse),
+            (2.0, PlayerAction::TurnWithGamepad),
+        ]
+        .into_iter()
+        .filter_map(|(factor, action)| Some(factor * action_state.axis_pair(action)?.xy()))
+        .sum();
+        camera_follow.direction =
+            Quat::from_rotation_y(time.delta_seconds() * -turn.x).mul_vec3(camera_follow.direction);
+
+        let sideway = camera_follow.direction.cross(Vec3::Y);
+
         let direction = if let Some(axis_pair) = action_state.clamped_axis_pair(PlayerAction::Run) {
-            Vec3::new(axis_pair.x(), 0.0, -axis_pair.y()).clamp_length_max(1.0)
+            (axis_pair.x() * sideway + camera_follow.direction * axis_pair.y())
+                .clamp_length_max(1.0)
         } else {
             Vec3::ZERO
         };
