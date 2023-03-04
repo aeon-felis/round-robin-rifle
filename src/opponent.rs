@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use bevy_tnua::{TnuaFreeFallBehavior, TnuaPlatformerBundle, TnuaPlatformerConfig};
 
+use crate::bumpin::BumpStatus;
 use crate::level_reloading::{CleanOnLevelReload, LevelPopulationLabel};
 use crate::menu::AppState;
 
@@ -65,4 +66,6 @@ fn setup_opponents(
             turning_angvel: 10.0,
         },
     ));
+
+    cmd.insert(BumpStatus::default());
 }

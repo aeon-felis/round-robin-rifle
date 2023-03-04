@@ -5,6 +5,7 @@ use bevy_tnua::{
 };
 use leafwing_input_manager::prelude::*;
 
+use crate::bumpin::{BumpInitiator, BumpStatus};
 use crate::camera::CameraFollow;
 use crate::level_reloading::{CleanOnLevelReload, LevelPopulationLabel};
 use crate::menu::AppState;
@@ -56,6 +57,7 @@ fn setup_player(
     cmd.insert(Velocity::default());
     cmd.insert(Collider::capsule_y(0.5, 1.0));
     cmd.insert(LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z);
+    cmd.insert(ActiveEvents::COLLISION_EVENTS);
 
     cmd.insert(TnuaPlatformerBundle::new_with_config(
         TnuaPlatformerConfig {
@@ -79,6 +81,9 @@ fn setup_player(
             turning_angvel: 10.0,
         },
     ));
+
+    cmd.insert(BumpInitiator);
+    cmd.insert(BumpStatus::default());
 
     cmd.insert(InputManagerBundle::<PlayerAction> {
         action_state: ActionState::default(),

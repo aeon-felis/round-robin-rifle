@@ -1,4 +1,5 @@
 mod arena;
+mod bumpin;
 mod camera;
 mod level_reloading;
 mod menu;
@@ -10,6 +11,7 @@ use bevy::window::CursorGrabMode;
 use bevy_rapier3d::prelude::RapierConfiguration;
 
 use self::arena::ArenaPlugin;
+use self::bumpin::BumpinPlugin;
 use self::camera::GameCameraPlugin;
 use self::level_reloading::LevelReloadingPlugin;
 use self::menu::{AppState, MenuPlugin, MenuState};
@@ -28,6 +30,7 @@ impl Plugin for GamePlugin {
         app.add_plugin(PlayerPlugin);
         app.add_plugin(OpponentPlugin);
         app.add_plugin(LevelReloadingPlugin);
+        app.add_plugin(BumpinPlugin);
 
         app.add_system(enable_disable_when_in_game_or_not);
     }
