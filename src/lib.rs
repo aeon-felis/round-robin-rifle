@@ -5,6 +5,8 @@ mod level_reloading;
 mod menu;
 mod opponent;
 mod player;
+mod rifle;
+mod utils;
 
 use bevy::prelude::*;
 use bevy::window::CursorGrabMode;
@@ -20,6 +22,7 @@ use self::player::PlayerPlugin;
 
 pub struct GamePlugin;
 pub use self::menu::MenuActionForKbgp;
+use self::rifle::RiflePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
@@ -29,6 +32,7 @@ impl Plugin for GamePlugin {
         app.add_plugin(ArenaPlugin);
         app.add_plugin(PlayerPlugin);
         app.add_plugin(OpponentPlugin);
+        app.add_plugin(RiflePlugin);
         app.add_plugin(LevelReloadingPlugin);
         app.add_plugin(BumpinPlugin);
 
@@ -56,4 +60,12 @@ fn enable_disable_when_in_game_or_not(
         window.set_cursor_visibility(!in_game);
     }
     *already_in_game = Some(in_game);
+}
+
+mod collision_groups {
+    use bevy_rapier3d::prelude::Group;
+
+    pub const GENERAL: Group = Group::GROUP_1;
+    pub const PARTICIPANT: Group = Group::GROUP_2;
+    pub const WEAPON: Group = Group::GROUP_3;
 }

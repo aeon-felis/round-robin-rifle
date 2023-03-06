@@ -9,6 +9,9 @@ impl Plugin for ArenaPlugin {
     }
 }
 
+#[derive(Component)]
+pub struct Ground;
+
 fn setup_arena(
     mut commands: Commands,
     mut mesh_assets: ResMut<Assets<Mesh>>,
@@ -21,6 +24,7 @@ fn setup_arena(
         ..Default::default()
     });
     cmd.insert(Collider::halfspace(Vec3::Y).unwrap());
+    cmd.insert(Ground);
 
     commands.spawn(PointLightBundle {
         transform: Transform::from_xyz(5.0, 5.0, 5.0),

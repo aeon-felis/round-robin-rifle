@@ -3,8 +3,10 @@ use bevy_rapier3d::prelude::*;
 use bevy_tnua::{TnuaFreeFallBehavior, TnuaPlatformerBundle, TnuaPlatformerConfig};
 
 use crate::bumpin::BumpStatus;
+use crate::collision_groups;
 use crate::level_reloading::{CleanOnLevelReload, LevelPopulationLabel};
 use crate::menu::AppState;
+use crate::rifle::RifleHolder;
 
 pub struct OpponentPlugin;
 
@@ -43,6 +45,10 @@ fn setup_opponents(
     cmd.insert(Velocity::default());
     cmd.insert(Collider::capsule_y(0.5, 1.0));
     cmd.insert(LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z);
+    cmd.insert(SolverGroups {
+        memberships: collision_groups::PARTICIPANT,
+        filters: collision_groups::GENERAL | collision_groups::PARTICIPANT,
+    });
 
     cmd.insert(TnuaPlatformerBundle::new_with_config(
         TnuaPlatformerConfig {
@@ -68,4 +74,5 @@ fn setup_opponents(
     ));
 
     cmd.insert(BumpStatus::default());
+    cmd.insert(RifleHolder::NoRifle);
 }

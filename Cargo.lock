@@ -2971,6 +2971,7 @@ dependencies = [
  "bevy-tnua",
  "bevy_egui",
  "bevy_rapier3d",
+ "bitflags",
  "leafwing-input-manager",
 ]
 

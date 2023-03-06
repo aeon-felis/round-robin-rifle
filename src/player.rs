@@ -7,8 +7,10 @@ use leafwing_input_manager::prelude::*;
 
 use crate::bumpin::{BumpInitiator, BumpStatus};
 use crate::camera::CameraFollow;
+use crate::collision_groups;
 use crate::level_reloading::{CleanOnLevelReload, LevelPopulationLabel};
 use crate::menu::AppState;
+use crate::rifle::RifleHolder;
 
 pub struct PlayerPlugin;
 
@@ -58,6 +60,10 @@ fn setup_player(
     cmd.insert(Collider::capsule_y(0.5, 1.0));
     cmd.insert(LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z);
     cmd.insert(ActiveEvents::COLLISION_EVENTS);
+    cmd.insert(SolverGroups {
+        memberships: collision_groups::PARTICIPANT,
+        filters: collision_groups::GENERAL | collision_groups::PARTICIPANT,
+    });
 
     cmd.insert(TnuaPlatformerBundle::new_with_config(
         TnuaPlatformerConfig {
@@ -84,6 +90,7 @@ fn setup_player(
 
     cmd.insert(BumpInitiator);
     cmd.insert(BumpStatus::default());
+    cmd.insert(RifleHolder::NoRifle);
 
     cmd.insert(InputManagerBundle::<PlayerAction> {
         action_state: ActionState::default(),
@@ -119,8 +126,10 @@ fn player_controls(
         .into_iter()
         .filter_map(|(factor, action)| Some(factor * action_state.axis_pair(action)?.xy()))
         .sum();
-        camera_follow.direction =
+        let turn_to_direction =
             Quat::from_rotation_y(time.delta_seconds() * -turn.x).mul_vec3(camera_follow.direction);
+        camera_follow.direction = turn_to_direction;
+        controls.desired_forward = turn_to_direction;
 
         let sideway = camera_follow.direction.cross(Vec3::Y);
 
