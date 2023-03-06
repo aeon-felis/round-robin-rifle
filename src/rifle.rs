@@ -93,7 +93,9 @@ fn handle_rifle_collisions(
                 *rifle_status = RifleStatus::Equiped(other);
                 *rifle_holder = RifleHolder::HasRifle(rifle);
                 let joint = FixedJointBuilder::new().local_anchor1(Vec3::new(-1.2, 0.0, 0.0));
-                commands.entity(rifle).insert(ImpulseJoint::new(other, joint));
+                commands
+                    .entity(rifle)
+                    .insert(ImpulseJoint::new(other, joint));
             }
         }
     }
