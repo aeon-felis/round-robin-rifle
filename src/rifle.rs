@@ -76,6 +76,7 @@ fn handle_rifle_collisions(
     mut rifles_query: Query<&mut RifleStatus>,
     ground_query: Query<&Ground>,
     mut rifle_holder_query: Query<&mut RifleHolder>,
+    mut commands: Commands,
 ) {
     for event in reader.iter() {
         let CollisionEvent::Started(e1, e2, _) = event else { continue };
@@ -91,6 +92,8 @@ fn handle_rifle_collisions(
             if matches!(*rifle_holder, RifleHolder::NoRifle) {
                 *rifle_status = RifleStatus::Equiped(other);
                 *rifle_holder = RifleHolder::HasRifle(rifle);
+                let joint = FixedJointBuilder::new().local_anchor1(Vec3::new(-1.2, 0.0, 0.0));
+                commands.entity(rifle).insert(ImpulseJoint::new(other, joint));
             }
         }
     }
@@ -99,7 +102,6 @@ fn handle_rifle_collisions(
 fn pose_rifle(
     time: Res<Time>,
     mut rifles_query: Query<(&RifleStatus, &GlobalTransform, &mut Velocity)>,
-    holders_query: Query<&GlobalTransform, With<RifleHolder>>,
 ) {
     if time.delta_seconds() == 0.0 {
         return;
@@ -119,17 +121,8 @@ fn pose_rifle(
 
                 // TODO: make it spin?
             }
-            RifleStatus::Equiped(holder) => {
-                let (_, rotation, translation) = transform.to_scale_rotation_translation();
-                let holder_transform = holders_query.get(*holder).unwrap();
-                let desired_position = holder_transform.transform_point(Vec3::new(-1.2, 0.0, 0.0));
-                let one_frame_velocity = (desired_position - translation) / time.delta_seconds();
-                velocity.linvel = one_frame_velocity;
-
-                let (_, desired_rotation, _) = holder_transform.to_scale_rotation_translation();
-                let one_frame_angvel =
-                    (rotation.inverse() * desired_rotation) / time.delta_seconds();
-                velocity.angvel = one_frame_angvel.xyz();
+            RifleStatus::Equiped(_holder) => {
+                // TODO: move the rifle up or down according to aim
             }
         }
     }
