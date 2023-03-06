@@ -13,7 +13,15 @@ use round_robin_rifle::{GamePlugin, MenuActionForKbgp};
 
 fn main() {
     let mut app = App::new();
-    app.add_plugins(DefaultPlugins);
+    app.add_plugins(DefaultPlugins.set(WindowPlugin {
+        window: WindowDescriptor {
+            title: "Round Robin Rifle".to_owned(),
+            width: 800.0,
+            height: 600.0,
+            ..Default::default()
+        },
+        ..Default::default()
+    }));
 
     app.add_plugin(EguiPlugin);
     app.insert_resource(EguiSettings {
