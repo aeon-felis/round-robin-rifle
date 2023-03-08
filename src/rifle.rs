@@ -38,23 +38,11 @@ enum RifleStatus {
     Equiped(Entity),
 }
 
-fn setup_rifle(
-    mut commands: Commands,
-    mut mesh_assets: ResMut<Assets<Mesh>>,
-    mut material_assets: ResMut<Assets<StandardMaterial>>,
-) {
+fn setup_rifle(mut commands: Commands, asset_server: Res<AssetServer>) {
     let mut cmd = commands.spawn_empty();
     cmd.insert(CleanOnLevelReload);
-    cmd.insert(PbrBundle {
-        mesh: mesh_assets.add(Mesh::from(shape::Box {
-            min_x: -0.1,
-            max_x: 0.1,
-            min_y: -0.1,
-            max_y: 0.1,
-            min_z: -0.5,
-            max_z: 0.5,
-        })),
-        material: material_assets.add(Color::BEIGE.into()),
+    cmd.insert(SceneBundle {
+        scene: asset_server.load("rifle.glb#Scene0"),
         transform: Transform::from_xyz(-2.0, 1.0, 5.0),
         ..Default::default()
     });

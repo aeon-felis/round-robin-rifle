@@ -53,6 +53,7 @@ fn main() {
 
     app.add_plugin(RapierPhysicsPlugin::<NoUserData>::default());
     app.add_plugin(TnuaRapier3dPlugin);
+    // app.add_plugin(bevy_rapier3d::render::RapierDebugRenderPlugin::default());
     app.add_plugin(TnuaPlatformerPlugin);
 
     app.add_plugin(GamePlugin);
