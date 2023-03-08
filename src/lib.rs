@@ -1,6 +1,7 @@
 mod arena;
 mod bumpin;
 mod camera;
+mod crosshair;
 mod level_reloading;
 mod menu;
 mod opponent;
@@ -15,6 +16,7 @@ use bevy_rapier3d::prelude::RapierConfiguration;
 use self::arena::ArenaPlugin;
 use self::bumpin::BumpinPlugin;
 use self::camera::GameCameraPlugin;
+use self::crosshair::CrosshairPlugin;
 use self::level_reloading::LevelReloadingPlugin;
 use self::menu::{AppState, MenuPlugin, MenuState};
 use self::opponent::OpponentPlugin;
@@ -35,6 +37,7 @@ impl Plugin for GamePlugin {
         app.add_plugin(RiflePlugin);
         app.add_plugin(LevelReloadingPlugin);
         app.add_plugin(BumpinPlugin);
+        app.add_plugin(CrosshairPlugin);
 
         app.add_system(enable_disable_when_in_game_or_not);
     }

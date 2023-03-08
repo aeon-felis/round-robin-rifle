@@ -32,7 +32,7 @@ pub enum RifleHolder {
 }
 
 #[derive(Component)]
-enum RifleStatus {
+pub enum RifleStatus {
     Ragdoll,
     Floating,
     Equiped(Entity),
