@@ -97,12 +97,15 @@ fn setup_player(
         input_map: {
             let mut input_map = InputMap::default();
             input_map.insert(VirtualDPad::wasd(), PlayerAction::Run);
-            input_map.insert(VirtualDPad::dpad(), PlayerAction::Run);
-            input_map.insert(DualAxis::left_stick(), PlayerAction::Run);
             input_map.insert(KeyCode::Space, PlayerAction::Jump);
-            input_map.insert(GamepadButtonType::South, PlayerAction::Jump);
             input_map.insert(DualAxis::mouse_motion(), PlayerAction::TurnWithMouse);
-            input_map.insert(DualAxis::right_stick(), PlayerAction::TurnWithGamepad);
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                input_map.insert(VirtualDPad::dpad(), PlayerAction::Run);
+                input_map.insert(DualAxis::left_stick(), PlayerAction::Run);
+                input_map.insert(GamepadButtonType::South, PlayerAction::Jump);
+                input_map.insert(DualAxis::right_stick(), PlayerAction::TurnWithGamepad);
+            }
             input_map
         },
     });
