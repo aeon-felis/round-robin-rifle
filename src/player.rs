@@ -8,7 +8,7 @@ use leafwing_input_manager::prelude::*;
 use crate::bumpin::{BumpInitiator, BumpStatus};
 use crate::camera::CameraFollow;
 use crate::collision_groups;
-use crate::level_reloading::{CleanOnLevelReload, LevelPopulationLabel};
+use crate::level_reloading::{CleanOnLevelReload, LevelPopulationSet};
 use crate::menu::AppState;
 use crate::rifle::RifleHolder;
 
@@ -17,12 +17,12 @@ pub struct PlayerPlugin;
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(InputManagerPlugin::<PlayerAction>::default());
-        app.add_system_set({
-            SystemSet::on_enter(AppState::LoadLevel)
-                .label(LevelPopulationLabel)
-                .with_system(setup_player)
+        app.add_system({
+            setup_player
+                .in_schedule(OnEnter(AppState::LoadLevel))
+                .in_set(LevelPopulationSet)
         });
-        app.add_system_set(SystemSet::on_update(AppState::Game).with_system(player_controls));
+        app.add_system(player_controls.in_set(OnUpdate(AppState::Game)));
     }
 }
 

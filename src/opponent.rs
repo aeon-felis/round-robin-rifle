@@ -4,7 +4,7 @@ use bevy_tnua::{TnuaFreeFallBehavior, TnuaPlatformerBundle, TnuaPlatformerConfig
 
 use crate::bumpin::BumpStatus;
 use crate::collision_groups;
-use crate::level_reloading::{CleanOnLevelReload, LevelPopulationLabel};
+use crate::level_reloading::{CleanOnLevelReload, LevelPopulationSet};
 use crate::menu::AppState;
 use crate::rifle::RifleHolder;
 
@@ -12,10 +12,10 @@ pub struct OpponentPlugin;
 
 impl Plugin for OpponentPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set({
-            SystemSet::on_enter(AppState::LoadLevel)
-                .label(LevelPopulationLabel)
-                .with_system(setup_opponents)
+        app.add_system({
+            setup_opponents
+                .in_schedule(OnEnter(AppState::LoadLevel))
+                .in_set(LevelPopulationSet)
         });
     }
 }

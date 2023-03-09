@@ -10,7 +10,7 @@ mod rifle;
 mod utils;
 
 use bevy::prelude::*;
-use bevy::window::CursorGrabMode;
+use bevy::window::{CursorGrabMode, PrimaryWindow};
 use bevy_rapier3d::prelude::RapierConfiguration;
 
 use self::arena::ArenaPlugin;
@@ -18,7 +18,7 @@ use self::bumpin::BumpinPlugin;
 use self::camera::GameCameraPlugin;
 use self::crosshair::CrosshairPlugin;
 use self::level_reloading::LevelReloadingPlugin;
-use self::menu::{AppState, MenuPlugin, MenuState};
+use self::menu::{AppState, MenuPlugin};
 use self::opponent::OpponentPlugin;
 use self::player::PlayerPlugin;
 
@@ -28,7 +28,7 @@ use self::rifle::RiflePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app.add_state(AppState::Menu(MenuState::Main));
+        app.add_state::<AppState>();
         app.add_plugin(MenuPlugin);
         app.add_plugin(GameCameraPlugin);
         app.add_plugin(ArenaPlugin);
@@ -47,20 +47,20 @@ fn enable_disable_when_in_game_or_not(
     mut already_in_game: Local<Option<bool>>,
     state: Res<State<AppState>>,
     mut rapier_configuration: ResMut<RapierConfiguration>,
-    mut windows: ResMut<Windows>,
+    mut windows_query: Query<&mut Window, With<PrimaryWindow>>,
 ) {
-    let in_game = *state.current() == AppState::Game;
+    let in_game = state.0 == AppState::Game;
     if *already_in_game == Some(in_game) {
         return;
     }
     rapier_configuration.physics_pipeline_active = in_game;
-    if let Some(window) = windows.get_primary_mut() {
-        window.set_cursor_grab_mode(if in_game {
+    if let Ok(mut window) = windows_query.get_single_mut() {
+        window.cursor.grab_mode = if in_game {
             CursorGrabMode::Locked
         } else {
             CursorGrabMode::None
-        });
-        window.set_cursor_visibility(!in_game);
+        };
+        window.cursor.visible = !in_game;
     }
     *already_in_game = Some(in_game);
 }

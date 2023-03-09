@@ -7,20 +7,20 @@ pub struct LevelReloadingPlugin;
 #[derive(Component)]
 pub struct CleanOnLevelReload;
 
-#[derive(SystemLabel)]
-pub struct LevelPopulationLabel;
+#[derive(SystemSet, Clone, PartialEq, Eq, Debug, Hash)]
+pub struct LevelPopulationSet;
 
 impl Plugin for LevelReloadingPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set({
-            SystemSet::on_enter(AppState::LoadLevel)
-                .before(LevelPopulationLabel)
-                .with_system(clean_entities)
+        app.add_system({
+            clean_entities
+                .in_schedule(OnEnter(AppState::LoadLevel))
+                .before(LevelPopulationSet)
         });
-        app.add_system_set({
-            SystemSet::on_enter(AppState::LoadLevel)
-                .after(LevelPopulationLabel)
-                .with_system(move_to_game_state)
+        app.add_system({
+            move_to_game_state
+                .in_schedule(OnEnter(AppState::LoadLevel))
+                .after(LevelPopulationSet)
         });
     }
 }
@@ -31,6 +31,6 @@ fn clean_entities(query: Query<Entity, With<CleanOnLevelReload>>, mut commands: 
     }
 }
 
-fn move_to_game_state(mut state: ResMut<State<AppState>>) {
-    state.overwrite_set(AppState::Game).unwrap();
+fn move_to_game_state(mut state: ResMut<NextState<AppState>>) {
+    state.set(AppState::Game);
 }

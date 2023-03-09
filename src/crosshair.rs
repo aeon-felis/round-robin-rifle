@@ -27,7 +27,7 @@ fn create_crossair(
         cmd.insert(Crosshair { owner: rifle });
         cmd.insert(SceneBundle {
             scene: asset_server.load("crosshair.glb#Scene0"),
-            visibility: Visibility { is_visible: false },
+            visibility: Visibility::Hidden,
             ..Default::default()
         });
     }
@@ -52,14 +52,14 @@ fn update_crosshairs(
                     false,
                     QueryFilter::default().exclude_collider(crosshair.owner),
                 ) {
-                    visibility.is_visible = true;
+                    *visibility = Visibility::Inherited;
                     transform.translation = intersection.point;
                     transform.look_at(rifle_translation, Vec3::Y);
                 } else {
-                    visibility.is_visible = false;
+                    *visibility = Visibility::Hidden;
                 }
             } else {
-                visibility.is_visible = false;
+                *visibility = Visibility::Hidden;
             }
         } else {
             commands.entity(crosshair_entity).despawn_recursive();

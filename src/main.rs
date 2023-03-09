@@ -5,6 +5,7 @@
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
 
 use bevy::prelude::*;
+use bevy::window::WindowResolution;
 use bevy_egui::{EguiPlugin, EguiSettings};
 use bevy_egui_kbgp::{KbgpNavBindings, KbgpNavCommand, KbgpPlugin, KbgpSettings};
 use bevy_rapier3d::prelude::{NoUserData, RapierPhysicsPlugin};
@@ -14,12 +15,11 @@ use round_robin_rifle::{GamePlugin, MenuActionForKbgp};
 fn main() {
     let mut app = App::new();
     app.add_plugins(DefaultPlugins.set(WindowPlugin {
-        window: WindowDescriptor {
+        primary_window: Some(Window {
             title: "Round Robin Rifle".to_owned(),
-            width: 800.0,
-            height: 600.0,
+            resolution: WindowResolution::new(800.0, 600.0),
             ..Default::default()
-        },
+        }),
         ..Default::default()
     }));
 

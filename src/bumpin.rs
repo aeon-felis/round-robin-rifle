@@ -8,11 +8,11 @@ pub struct BumpinPlugin;
 
 impl Plugin for BumpinPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set({
-            SystemSet::on_update(AppState::Game)
-                .with_system(detect_bumpin)
-                .with_system(apply_bumpin.after(detect_bumpin))
-        });
+        app.add_systems(
+            (detect_bumpin, apply_bumpin)
+                .chain()
+                .in_set(OnUpdate(AppState::Game)),
+        );
     }
 }
 

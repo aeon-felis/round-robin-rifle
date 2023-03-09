@@ -19,7 +19,10 @@ fn setup_arena(
 ) {
     let mut cmd = commands.spawn_empty();
     cmd.insert(PbrBundle {
-        mesh: mesh_assets.add(Mesh::from(shape::Plane { size: 128.0 })),
+        mesh: mesh_assets.add(Mesh::from(shape::Plane {
+            size: 128.0,
+            subdivisions: 0,
+        })),
         material: material_assets.add(Color::WHITE.into()),
         ..Default::default()
     });

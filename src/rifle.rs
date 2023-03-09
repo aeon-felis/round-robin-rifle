@@ -3,7 +3,7 @@ use bevy_rapier3d::prelude::*;
 
 use crate::arena::Ground;
 use crate::collision_groups;
-use crate::level_reloading::{CleanOnLevelReload, LevelPopulationLabel};
+use crate::level_reloading::{CleanOnLevelReload, LevelPopulationSet};
 use crate::menu::AppState;
 use crate::utils::entities_ordered_by_type;
 
@@ -11,17 +11,13 @@ pub struct RiflePlugin;
 
 impl Plugin for RiflePlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set({
-            SystemSet::on_enter(AppState::LoadLevel)
-                .label(LevelPopulationLabel)
-                .with_system(setup_rifle)
+        app.add_system({
+            setup_rifle
+                .in_schedule(OnEnter(AppState::LoadLevel))
+                .in_set(LevelPopulationSet)
         });
 
-        app.add_system_set({
-            SystemSet::on_update(AppState::Game)
-                .with_system(handle_rifle_collisions)
-                .with_system(pose_rifle)
-        });
+        app.add_systems((handle_rifle_collisions, pose_rifle).in_set(OnUpdate(AppState::Game)));
     }
 }
 
