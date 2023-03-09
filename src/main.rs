@@ -10,6 +10,7 @@ use bevy_egui::{EguiPlugin, EguiSettings};
 use bevy_egui_kbgp::{KbgpNavBindings, KbgpNavCommand, KbgpPlugin, KbgpSettings};
 use bevy_rapier3d::prelude::{NoUserData, RapierPhysicsPlugin};
 use bevy_tnua::{TnuaPlatformerPlugin, TnuaRapier3dPlugin};
+use bevy_turborand::RngPlugin;
 use round_robin_rifle::{GamePlugin, MenuActionForKbgp};
 
 fn main() {
@@ -28,6 +29,8 @@ fn main() {
         scale_factor: 2.0,
         default_open_url_target: None,
     });
+
+    app.add_plugin(RngPlugin::default());
 
     app.add_plugin(KbgpPlugin);
     app.insert_resource(KbgpSettings {

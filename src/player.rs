@@ -10,9 +10,12 @@ use crate::camera::CameraFollow;
 use crate::collision_groups;
 use crate::level_reloading::{CleanOnLevelReload, LevelPopulationSet};
 use crate::menu::AppState;
-use crate::rifle::RifleHolder;
+use crate::rifle::{RifleHolder, ShootCommand};
 
 pub struct PlayerPlugin;
+
+#[derive(SystemSet, Clone, PartialEq, Eq, Debug, Hash)]
+pub struct PlayerControlsSet;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
@@ -22,7 +25,11 @@ impl Plugin for PlayerPlugin {
                 .in_schedule(OnEnter(AppState::LoadLevel))
                 .in_set(LevelPopulationSet)
         });
-        app.add_system(player_controls.in_set(OnUpdate(AppState::Game)));
+        app.add_system(
+            player_controls
+                .in_set(PlayerControlsSet)
+                .in_set(OnUpdate(AppState::Game)),
+        );
     }
 }
 
@@ -32,6 +39,7 @@ enum PlayerAction {
     Jump,
     TurnWithMouse,
     TurnWithGamepad,
+    Shoot,
 }
 
 fn setup_player(
@@ -99,13 +107,31 @@ fn setup_player(
             input_map.insert(VirtualDPad::wasd(), PlayerAction::Run);
             input_map.insert(KeyCode::Space, PlayerAction::Jump);
             input_map.insert(DualAxis::mouse_motion(), PlayerAction::TurnWithMouse);
+            input_map.insert(MouseButton::Left, PlayerAction::Shoot);
             #[cfg(not(target_arch = "wasm32"))]
             {
                 input_map.insert(VirtualDPad::dpad(), PlayerAction::Run);
                 input_map.insert(DualAxis::left_stick(), PlayerAction::Run);
                 input_map.insert(GamepadButtonType::South, PlayerAction::Jump);
+                input_map.insert(GamepadButtonType::LeftTrigger, PlayerAction::Jump);
+                input_map.insert(GamepadButtonType::LeftTrigger2, PlayerAction::Jump);
                 input_map.insert(DualAxis::right_stick(), PlayerAction::TurnWithGamepad);
+                input_map.insert(GamepadButtonType::RightTrigger, PlayerAction::Shoot);
+                input_map.insert(GamepadButtonType::RightTrigger2, PlayerAction::Shoot);
             }
+
+            // TODO: remove these before submitting the game:
+            input_map.insert(
+                VirtualDPad {
+                    up: KeyCode::I.into(),
+                    down: KeyCode::K.into(),
+                    left: KeyCode::J.into(),
+                    right: KeyCode::L.into(),
+                },
+                PlayerAction::TurnWithGamepad,
+            );
+            input_map.insert(KeyCode::Semicolon, PlayerAction::Shoot);
+
             input_map
         },
     });
@@ -119,9 +145,11 @@ fn player_controls(
         &ActionState<PlayerAction>,
         &mut TnuaPlatformerControls,
         &mut CameraFollow,
+        &RifleHolder,
     )>,
+    mut shoot_commands_writer: EventWriter<ShootCommand>,
 ) {
-    for (action_state, mut controls, mut camera_follow) in query.iter_mut() {
+    for (action_state, mut controls, mut camera_follow, rifle_holder) in query.iter_mut() {
         let turn: Vec2 = [
             (0.1, PlayerAction::TurnWithMouse),
             (2.0, PlayerAction::TurnWithGamepad),
@@ -151,5 +179,12 @@ fn player_controls(
                 None
             }
         };
+
+        if action_state.just_pressed(PlayerAction::Shoot) {
+            if let RifleHolder::HasRifle(rifle) = rifle_holder {
+                shoot_commands_writer.send(ShootCommand { rifle: *rifle })
+            } else {
+            }
+        }
     }
 }
