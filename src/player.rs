@@ -10,7 +10,7 @@ use crate::camera::CameraFollow;
 use crate::collision_groups;
 use crate::level_reloading::{CleanOnLevelReload, LevelPopulationSet};
 use crate::menu::AppState;
-use crate::rifle::{RifleHolder, ShootCommand};
+use crate::rifle::{AimElevation, RifleHolder, ShootCommand};
 
 pub struct PlayerPlugin;
 
@@ -99,6 +99,7 @@ fn setup_player(
     cmd.insert(BumpInitiator);
     cmd.insert(BumpStatus::default());
     cmd.insert(RifleHolder::NoRifle);
+    cmd.insert(AimElevation(0.0));
 
     cmd.insert(InputManagerBundle::<PlayerAction> {
         action_state: ActionState::default(),
@@ -145,22 +146,31 @@ fn player_controls(
         &ActionState<PlayerAction>,
         &mut TnuaPlatformerControls,
         &mut CameraFollow,
+        &mut AimElevation,
         &RifleHolder,
     )>,
     mut shoot_commands_writer: EventWriter<ShootCommand>,
 ) {
-    for (action_state, mut controls, mut camera_follow, rifle_holder) in query.iter_mut() {
+    for (action_state, mut controls, mut camera_follow, mut aim_elevation, rifle_holder) in
+        query.iter_mut()
+    {
         let turn: Vec2 = [
-            (0.1, PlayerAction::TurnWithMouse),
-            (2.0, PlayerAction::TurnWithGamepad),
+            (Vec2::new(0.1, -0.05), PlayerAction::TurnWithMouse),
+            (Vec2::new(2.0, 2.0), PlayerAction::TurnWithGamepad),
         ]
         .into_iter()
-        .filter_map(|(factor, action)| Some(factor * action_state.axis_pair(action)?.xy()))
+        .filter_map(|(factor, action)| {
+            let turn = action_state.axis_pair(action)?;
+            Some(Vec2::new(factor.x * turn.x(), factor.y * turn.y()))
+        })
         .sum();
         let turn_to_direction =
             Quat::from_rotation_y(time.delta_seconds() * -turn.x).mul_vec3(camera_follow.direction);
         camera_follow.direction = turn_to_direction;
         controls.desired_forward = turn_to_direction;
+
+        aim_elevation.0 += time.delta_seconds() * turn.y;
+        aim_elevation.0 = aim_elevation.0.clamp(-0.5, 0.5);
 
         let sideway = camera_follow.direction.cross(Vec3::Y);
 

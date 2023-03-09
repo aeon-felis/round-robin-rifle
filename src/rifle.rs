@@ -22,7 +22,10 @@ impl Plugin for RiflePlugin {
                 .in_set(LevelPopulationSet)
         });
 
-        app.add_systems((handle_rifle_collisions, pose_rifle).in_set(OnUpdate(AppState::Game)));
+        app.add_systems(
+            (handle_rifle_collisions, pose_rifle, update_rifle_elevation)
+                .in_set(OnUpdate(AppState::Game)),
+        );
         app.add_system(
             handle_shooting
                 .after(PlayerControlsSet)
@@ -30,6 +33,9 @@ impl Plugin for RiflePlugin {
         );
     }
 }
+
+#[derive(Component)]
+pub struct AimElevation(pub f32);
 
 #[derive(Component)]
 pub enum RifleHolder {
@@ -133,6 +139,19 @@ fn pose_rifle(
                 }
             }
         }
+    }
+}
+
+fn update_rifle_elevation(
+    holders_query: Query<(&RifleHolder, &AimElevation)>,
+    mut rifles_query: Query<&mut ImpulseJoint>,
+) {
+    for (rifle_holder, AimElevation(aim_elevation)) in holders_query.iter() {
+        let RifleHolder::HasRifle(rifle) = rifle_holder else { continue };
+        let Ok(mut joint) = rifles_query.get_mut(*rifle) else { continue };
+        joint
+            .data
+            .set_local_basis1(Quat::from_rotation_x(-*aim_elevation));
     }
 }
 

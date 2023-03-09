@@ -6,7 +6,7 @@ use crate::bumpin::BumpStatus;
 use crate::collision_groups;
 use crate::level_reloading::{CleanOnLevelReload, LevelPopulationSet};
 use crate::menu::AppState;
-use crate::rifle::RifleHolder;
+use crate::rifle::{AimElevation, RifleHolder};
 
 pub struct OpponentPlugin;
 
@@ -75,4 +75,5 @@ fn setup_opponents(
 
     cmd.insert(BumpStatus::default());
     cmd.insert(RifleHolder::NoRifle);
+    cmd.insert(AimElevation(0.0));
 }
