@@ -28,10 +28,11 @@ fn update_camera(
     let Ok((camera_follow, camera_follow_transform)) = camera_follow_query.get_single() else { return };
     let sideways = camera_follow.direction.cross(Vec3::Y).normalize_or_zero();
     let object_at = camera_follow_transform.translation();
-    let camera_at = object_at - 20.0 * camera_follow.direction + 3.0 * Vec3::Y;
+    let camera_at = object_at - 10.0 * camera_follow.direction + 1.0 * Vec3::Y;
+    let mut target_transform = Transform::from_translation(camera_at).looking_at(object_at, Vec3::Y);
+    target_transform.translation += 1.2 * sideways;
 
     for mut camera_transform in cameras_query.iter_mut() {
-        *camera_transform = Transform::from_translation(camera_at).looking_at(object_at, Vec3::Y);
-        camera_transform.translation += 1.2 * sideways;
+        *camera_transform = target_transform;
     }
 }
