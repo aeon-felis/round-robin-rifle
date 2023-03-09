@@ -99,7 +99,7 @@ fn handle_rifle_collisions(
             {
                 *rifle_status = RifleStatus::Equiped(other);
                 *rifle_holder = RifleHolder::HasRifle(rifle);
-                let joint = FixedJointBuilder::new().local_anchor1(Vec3::new(-1.2, 0.0, 0.0));
+                let joint = FixedJointBuilder::new().local_anchor1(Vec3::new(1.2, 0.0, 0.0));
                 commands
                     .entity(rifle)
                     .insert(ImpulseJoint::new(other, joint));
@@ -151,7 +151,7 @@ fn update_rifle_elevation(
         let Ok(mut joint) = rifles_query.get_mut(*rifle) else { continue };
         joint
             .data
-            .set_local_basis1(Quat::from_rotation_x(-*aim_elevation));
+            .set_local_basis1(Quat::from_rotation_x(*aim_elevation));
     }
 }
 
@@ -177,7 +177,7 @@ fn handle_shooting(
         }
 
         let (_, rotation, _) = transform.to_scale_rotation_translation();
-        velocity.linvel = rotation.mul_vec3(Vec3::new(10.0 * rng.f32_normalized(), 10.0, -20.0));
+        velocity.linvel = rotation.mul_vec3(Vec3::new(10.0 * rng.f32_normalized(), 10.0, 20.0));
         velocity.angvel = Quat::from_axis_angle(rotation.mul_vec3(Vec3::X), -PI).xyz() * 5.0;
     }
 }

@@ -47,7 +47,7 @@ fn update_crosshairs(
                     rifle_transform.to_scale_rotation_translation();
                 if let Some((_, intersection)) = rapier_context.cast_ray_and_get_normal(
                     rifle_translation,
-                    rifle_rotation.mul_vec3(Vec3::Z),
+                    rifle_rotation.mul_vec3(-Vec3::Z),
                     f32::INFINITY,
                     false,
                     QueryFilter::default().exclude_collider(crosshair.owner),

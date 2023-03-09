@@ -55,7 +55,7 @@ fn setup_opponents(
             full_speed: 40.0,
             full_jump_height: 4.0,
             up: Vec3::Y,
-            forward: Vec3::X,
+            forward: -Vec3::Z,
             float_height: 2.0,
             cling_distance: 1.0,
             spring_strengh: 40.0,
