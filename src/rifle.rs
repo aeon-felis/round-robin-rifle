@@ -5,11 +5,10 @@ use bevy_rapier3d::prelude::*;
 use bevy_turborand::prelude::*;
 
 use crate::arena::Ground;
-use crate::collision_groups;
 use crate::level_reloading::{CleanOnLevelReload, LevelPopulationSet};
 use crate::menu::AppState;
-use crate::player::PlayerControlsSet;
 use crate::utils::entities_ordered_by_type;
+use crate::{collision_groups, ShootingSequenceSet};
 
 pub struct RiflePlugin;
 
@@ -26,11 +25,7 @@ impl Plugin for RiflePlugin {
             (handle_rifle_collisions, pose_rifle, update_rifle_elevation)
                 .in_set(OnUpdate(AppState::Game)),
         );
-        app.add_system(
-            handle_shooting
-                .after(PlayerControlsSet)
-                .in_set(OnUpdate(AppState::Game)),
-        );
+        app.add_system(handle_shooting.in_set(ShootingSequenceSet::RifleRecoil));
     }
 }
 

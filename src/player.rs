@@ -7,15 +7,12 @@ use leafwing_input_manager::prelude::*;
 
 use crate::bumpin::{BumpInitiator, BumpStatus};
 use crate::camera::CameraFollow;
-use crate::collision_groups;
 use crate::level_reloading::{CleanOnLevelReload, LevelPopulationSet};
 use crate::menu::AppState;
 use crate::rifle::{AimElevation, RifleHolder, ShootCommand};
+use crate::{collision_groups, ShootingSequenceSet};
 
 pub struct PlayerPlugin;
-
-#[derive(SystemSet, Clone, PartialEq, Eq, Debug, Hash)]
-pub struct PlayerControlsSet;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
@@ -25,11 +22,7 @@ impl Plugin for PlayerPlugin {
                 .in_schedule(OnEnter(AppState::LoadLevel))
                 .in_set(LevelPopulationSet)
         });
-        app.add_system(
-            player_controls
-                .in_set(PlayerControlsSet)
-                .in_set(OnUpdate(AppState::Game)),
-        );
+        app.add_system(player_controls.in_set(ShootingSequenceSet::ShootInitiator));
     }
 }
 

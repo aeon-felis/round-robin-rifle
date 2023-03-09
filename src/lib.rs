@@ -1,4 +1,5 @@
 mod arena;
+mod bullet;
 mod bumpin;
 mod camera;
 mod crosshair;
@@ -14,6 +15,7 @@ use bevy::window::{CursorGrabMode, PrimaryWindow};
 use bevy_rapier3d::prelude::RapierConfiguration;
 
 use self::arena::ArenaPlugin;
+use self::bullet::BulletPlugin;
 use self::bumpin::BumpinPlugin;
 use self::camera::GameCameraPlugin;
 use self::crosshair::CrosshairPlugin;
@@ -38,8 +40,19 @@ impl Plugin for GamePlugin {
         app.add_plugin(LevelReloadingPlugin);
         app.add_plugin(BumpinPlugin);
         app.add_plugin(CrosshairPlugin);
+        app.add_plugin(BulletPlugin);
 
         app.add_system(enable_disable_when_in_game_or_not);
+
+        app.configure_sets(
+            (
+                ShootingSequenceSet::ShootInitiator,
+                ShootingSequenceSet::GenerateBullet,
+                ShootingSequenceSet::RifleRecoil,
+            )
+                .chain()
+                .in_set(OnUpdate(AppState::Game)),
+        );
     }
 }
 
@@ -71,4 +84,11 @@ mod collision_groups {
     pub const GENERAL: Group = Group::GROUP_1;
     pub const PARTICIPANT: Group = Group::GROUP_2;
     pub const WEAPON: Group = Group::GROUP_3;
+}
+
+#[derive(SystemSet, Clone, PartialEq, Eq, Debug, Hash)]
+pub enum ShootingSequenceSet {
+    ShootInitiator,
+    GenerateBullet,
+    RifleRecoil,
 }
