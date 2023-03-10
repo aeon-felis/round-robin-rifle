@@ -23,7 +23,9 @@ fn generate_bullet(
         let mut cmd = commands.spawn_empty();
         cmd.insert(SceneBundle {
             scene: asset_server.load("bullet.glb#Scene0"),
-            transform: rifle_transform.mul_transform(Transform::from_xyz(0.0, 0.0, -2.0)).into(),
+            transform: rifle_transform
+                .mul_transform(Transform::from_xyz(0.0, 0.0, -2.0))
+                .into(),
             ..Default::default()
         });
 

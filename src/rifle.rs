@@ -21,10 +21,7 @@ impl Plugin for RiflePlugin {
                 .in_set(LevelPopulationSet)
         });
 
-        app.add_systems(
-            (handle_rifle_collisions, pose_rifle, update_rifle_elevation)
-                .in_set(OnUpdate(AppState::Game)),
-        );
+        app.add_systems((handle_rifle_collisions, pose_rifle).in_set(OnUpdate(AppState::Game)));
         app.add_system(handle_shooting.in_set(ShootingSequenceSet::RifleRecoil));
     }
 }
@@ -41,6 +38,7 @@ pub enum RifleHolder {
 #[derive(Component)]
 pub enum RifleStatus {
     Ragdoll,
+    WaitBeforeFloat(Timer),
     Floating,
     Equiped(Entity),
     Cooldown(Timer),
@@ -68,7 +66,7 @@ fn setup_rifle(mut commands: Commands, asset_server: Res<AssetServer>) {
         filters: collision_groups::GENERAL,
     });
 
-    cmd.insert(RifleStatus::Ragdoll);
+    cmd.insert(RifleStatus::Floating);
 }
 
 fn handle_rifle_collisions(
@@ -87,7 +85,7 @@ fn handle_rifle_collisions(
             continue;
         }
         if ground_query.contains(other) {
-            *rifle_status = RifleStatus::Floating;
+            *rifle_status = RifleStatus::WaitBeforeFloat(Timer::from_seconds(0.5, TimerMode::Once));
         } else if let Ok(mut rifle_holder) = rifle_holder_query.get_mut(other) {
             if !matches!(*rifle_status, RifleStatus::Cooldown(_))
                 && matches!(*rifle_holder, RifleHolder::NoRifle)
@@ -105,15 +103,26 @@ fn handle_rifle_collisions(
 
 fn pose_rifle(
     time: Res<Time>,
-    mut rifles_query: Query<(&mut RifleStatus, &GlobalTransform, &mut Velocity)>,
+    holders_query: Query<&AimElevation>,
+    mut rifles_query: Query<(
+        &mut RifleStatus,
+        &GlobalTransform,
+        &mut Velocity,
+        Option<&mut ImpulseJoint>,
+    )>,
 ) {
     if time.delta_seconds() == 0.0 {
         return;
     }
-    for (mut rifle_status, transform, mut velocity) in rifles_query.iter_mut() {
+    for (mut rifle_status, transform, mut velocity, joint) in rifles_query.iter_mut() {
         match rifle_status.as_mut() {
             RifleStatus::Ragdoll => {
                 continue;
+            }
+            RifleStatus::WaitBeforeFloat(timer) => {
+                if timer.tick(time.delta()).finished() {
+                    *rifle_status = RifleStatus::Floating;
+                }
             }
             RifleStatus::Floating => {
                 let (_, _, translation) = transform.to_scale_rotation_translation();
@@ -123,10 +132,16 @@ fn pose_rifle(
                 let desired_velocitry = one_frame_velocity.clamp_length_max(5.0);
                 velocity.linvel = desired_velocitry;
 
-                // TODO: make it spin?
+                velocity.angvel = 2.0 * Vec3::Y;
             }
-            RifleStatus::Equiped(_holder) => {
-                // TODO: move the rifle up or down according to aim
+            RifleStatus::Equiped(holder) => {
+                if let Ok(AimElevation(aim_elevation)) = holders_query.get(*holder) {
+                    if let Some(mut joint) = joint {
+                        joint
+                            .data
+                            .set_local_basis1(Quat::from_rotation_x(*aim_elevation));
+                    }
+                }
             }
             RifleStatus::Cooldown(timer) => {
                 if timer.tick(time.delta()).finished() {
@@ -134,19 +149,6 @@ fn pose_rifle(
                 }
             }
         }
-    }
-}
-
-fn update_rifle_elevation(
-    holders_query: Query<(&RifleHolder, &AimElevation)>,
-    mut rifles_query: Query<&mut ImpulseJoint>,
-) {
-    for (rifle_holder, AimElevation(aim_elevation)) in holders_query.iter() {
-        let RifleHolder::HasRifle(rifle) = rifle_holder else { continue };
-        let Ok(mut joint) = rifles_query.get_mut(*rifle) else { continue };
-        joint
-            .data
-            .set_local_basis1(Quat::from_rotation_x(*aim_elevation));
     }
 }
 
