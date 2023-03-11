@@ -4,6 +4,7 @@ mod bullet;
 mod bumpin;
 mod camera;
 mod crosshair;
+mod killing;
 mod level_reloading;
 mod menu;
 mod opponent;
@@ -21,6 +22,7 @@ use self::bullet::BulletPlugin;
 use self::bumpin::BumpinPlugin;
 use self::camera::GameCameraPlugin;
 use self::crosshair::CrosshairPlugin;
+use self::killing::KillingPlugin;
 use self::level_reloading::LevelReloadingPlugin;
 use self::menu::{AppState, MenuPlugin};
 use self::opponent::OpponentPlugin;
@@ -44,6 +46,7 @@ impl Plugin for GamePlugin {
         app.add_plugin(CrosshairPlugin);
         app.add_plugin(BulletPlugin);
         app.add_plugin(GameAnimationPlugin);
+        app.add_plugin(KillingPlugin);
 
         app.add_system(enable_disable_when_in_game_or_not);
 

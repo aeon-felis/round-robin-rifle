@@ -5,6 +5,7 @@ use bevy::prelude::*;
 use bevy::utils::HashMap;
 use bevy_tnua::{TnuaAnimatingState, TnuaPlatformerAnimatingOutput, TnuaSystemSet};
 
+use crate::killing::Killable;
 use crate::menu::AppState;
 
 pub struct GameAnimationPlugin;
@@ -64,6 +65,7 @@ pub enum HumanAnimationState {
     Standing,
     Running(f32),
     Jumping,
+    Dead,
 }
 
 fn animate(
@@ -71,13 +73,16 @@ fn animate(
         &mut TnuaAnimatingState<HumanAnimationState>,
         &TnuaPlatformerAnimatingOutput,
         &AnimationsHandler,
+        &Killable,
     )>,
     mut animation_players_query: Query<&mut AnimationPlayer>,
 ) {
-    for (mut animating_state, animation_output, handler) in humans_query.iter_mut() {
+    for (mut animating_state, animation_output, handler, killable) in humans_query.iter_mut() {
         let Ok(mut player) = animation_players_query.get_mut(handler.owner_entity) else { continue} ;
         match animating_state.update_by_discriminant({
-            if animation_output.jumping_velocity.is_some() {
+            if killable.killed {
+                HumanAnimationState::Dead
+            } else if animation_output.jumping_velocity.is_some() {
                 HumanAnimationState::Jumping
             } else {
                 let speed = animation_output.running_velocity.length();
@@ -119,6 +124,14 @@ fn animate(
                     player
                         .play_with_transition(
                             handler.animations["Jump"].clone(),
+                            Duration::from_secs_f32(0.1),
+                        )
+                        .set_speed(1.0);
+                }
+                HumanAnimationState::Dead => {
+                    player
+                        .play_with_transition(
+                            handler.animations["Dead"].clone(),
                             Duration::from_secs_f32(0.1),
                         )
                         .set_speed(1.0);

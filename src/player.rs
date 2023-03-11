@@ -9,6 +9,7 @@ use leafwing_input_manager::prelude::*;
 use crate::animation::{GltfSceneHandler, HumanAnimationState};
 use crate::bumpin::{BumpInitiator, BumpStatus};
 use crate::camera::CameraFollow;
+use crate::killing::Killable;
 use crate::level_reloading::{CleanOnLevelReload, LevelPopulationSet};
 use crate::menu::AppState;
 use crate::rifle::{AimElevation, RifleHolder, ShootCommand};
@@ -88,6 +89,7 @@ fn setup_player(mut commands: Commands, asset_server: Res<AssetServer>) {
     cmd.insert(BumpStatus::default());
     cmd.insert(RifleHolder::NoRifle);
     cmd.insert(AimElevation(0.0));
+    cmd.insert(Killable { killed: false });
 
     cmd.insert(InputManagerBundle::<PlayerAction> {
         action_state: ActionState::default(),
@@ -130,9 +132,11 @@ fn setup_player(mut commands: Commands, asset_server: Res<AssetServer>) {
     });
 }
 
+#[allow(clippy::type_complexity)]
 fn player_controls(
     time: Res<Time>,
     mut query: Query<(
+        Entity,
         &ActionState<PlayerAction>,
         &mut TnuaPlatformerControls,
         &mut CameraFollow,
@@ -141,7 +145,7 @@ fn player_controls(
     )>,
     mut shoot_commands_writer: EventWriter<ShootCommand>,
 ) {
-    for (action_state, mut controls, mut camera_follow, mut aim_elevation, rifle_holder) in
+    for (entity, action_state, mut controls, mut camera_follow, mut aim_elevation, rifle_holder) in
         query.iter_mut()
     {
         let turn: Vec2 = [
@@ -182,8 +186,10 @@ fn player_controls(
 
         if action_state.just_pressed(PlayerAction::Shoot) {
             if let RifleHolder::HasRifle(rifle) = rifle_holder {
-                shoot_commands_writer.send(ShootCommand { rifle: *rifle })
-            } else {
+                shoot_commands_writer.send(ShootCommand {
+                    rifle: *rifle,
+                    shooter: entity,
+                })
             }
         }
     }

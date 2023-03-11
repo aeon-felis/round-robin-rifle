@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
 use crate::rifle::ShootCommand;
-use crate::ShootingSequenceSet;
+use crate::{collision_groups, ShootingSequenceSet};
 
 pub struct BulletPlugin;
 
@@ -12,13 +12,18 @@ impl Plugin for BulletPlugin {
     }
 }
 
+#[derive(Component)]
+pub struct Bullet {
+    pub shooter: Entity,
+}
+
 fn generate_bullet(
     mut reader: EventReader<ShootCommand>,
     rifles_query: Query<&GlobalTransform>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) {
-    for ShootCommand { rifle } in reader.iter() {
+    for ShootCommand { rifle, shooter } in reader.iter() {
         let Ok(rifle_transform) = rifles_query.get(*rifle) else { continue };
         let mut cmd = commands.spawn_empty();
         cmd.insert(SceneBundle {
@@ -35,5 +40,12 @@ fn generate_bullet(
             linvel: 100.0 * rifle_transform.forward(),
             angvel: Vec3::ZERO,
         });
+        cmd.insert(ActiveEvents::COLLISION_EVENTS);
+        cmd.insert(SolverGroups {
+            memberships: collision_groups::WEAPON,
+            filters: collision_groups::GENERAL,
+        });
+
+        cmd.insert(Bullet { shooter: *shooter });
     }
 }

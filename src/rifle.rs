@@ -45,6 +45,7 @@ pub enum RifleStatus {
 }
 
 pub struct ShootCommand {
+    pub shooter: Entity,
     pub rifle: Entity,
 }
 
@@ -159,7 +160,7 @@ fn handle_shooting(
     mut commands: Commands,
     mut rng: ResMut<GlobalRng>,
 ) {
-    for ShootCommand { rifle } in reader.iter() {
+    for ShootCommand { rifle, shooter: _ } in reader.iter() {
         let Ok((mut rifle_status, transform, mut velocity)) = rifles_query.get_mut(*rifle) else { continue };
 
         commands.entity(*rifle).remove::<ImpulseJoint>();
