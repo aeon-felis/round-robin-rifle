@@ -42,7 +42,7 @@ fn setup_player(mut commands: Commands, asset_server: Res<AssetServer>) {
     cmd.insert(CleanOnLevelReload);
     cmd.insert(SceneBundle {
         scene: asset_server.load("human.glb#Scene0"),
-        transform: Transform::from_xyz(0.0, 2.0, 0.0).looking_to(Vec3::Z, Vec3::Y),
+        transform: Transform::from_xyz(0.0, 2.0, 10.0),
         ..Default::default()
     });
     cmd.insert(GltfSceneHandler {
@@ -125,7 +125,7 @@ fn setup_player(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
     });
 
-    cmd.insert(CameraFollow { direction: Vec3::Z });
+    cmd.insert(CameraFollow { direction: -Vec3::Z });
 }
 
 fn player_controls(

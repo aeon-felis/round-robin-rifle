@@ -29,7 +29,7 @@ fn setup_opponents(mut commands: Commands, asset_server: Res<AssetServer>) {
     cmd.insert(CleanOnLevelReload);
     cmd.insert(SceneBundle {
         scene: asset_server.load("human.glb#Scene0"),
-        transform: Transform::from_xyz(-5.0, 2.0, 0.0).looking_to(Vec3::Z, Vec3::Y),
+        transform: Transform::from_xyz(-5.0, 2.0, 0.0),
         ..Default::default()
     });
     cmd.insert(GltfSceneHandler {
