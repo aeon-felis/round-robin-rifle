@@ -42,7 +42,7 @@ fn update_crosshairs(
     for (crosshair_entity, crosshair, mut visibility, mut transform) in crossairs_query.iter_mut() {
         transform.translation = Vec3::new(0.0, 2.0, 0.0);
         if let Ok((rifle_status, rifle_transform)) = rifles_query.get(crosshair.owner) {
-            if let RifleStatus::Equiped(_entity) = rifle_status {
+            if let RifleStatus::Equiped(holder) = rifle_status {
                 let (_, rifle_rotation, rifle_translation) =
                     rifle_transform.to_scale_rotation_translation();
                 if let Some((_, intersection)) = rapier_context.cast_ray_and_get_normal(
@@ -50,7 +50,8 @@ fn update_crosshairs(
                     rifle_rotation.mul_vec3(-Vec3::Z),
                     f32::INFINITY,
                     false,
-                    QueryFilter::default().exclude_collider(crosshair.owner),
+                    QueryFilter::default()
+                        .predicate(&|entity| entity != crosshair.owner && entity != *holder),
                 ) {
                     *visibility = Visibility::Inherited;
                     transform.translation = intersection.point;

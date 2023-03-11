@@ -33,7 +33,7 @@ fn update_camera(
     let camera_at = object_at - 10.0 * camera_follow.direction + 1.0 * Vec3::Y;
     let mut target_transform =
         Transform::from_translation(camera_at).looking_at(object_at, Vec3::Y);
-    target_transform.translation += 1.2 * sideways;
+    target_transform.translation += 0.65 * sideways;
     target_transform.rotate_around(
         0.5 * (object_at + camera_at),
         Quat::from_axis_angle(sideways, *aim_elevation),

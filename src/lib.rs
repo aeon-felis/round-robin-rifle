@@ -1,3 +1,4 @@
+mod animation;
 mod arena;
 mod bullet;
 mod bumpin;
@@ -14,6 +15,7 @@ use bevy::prelude::*;
 use bevy::window::{CursorGrabMode, PrimaryWindow};
 use bevy_rapier3d::prelude::RapierConfiguration;
 
+use self::animation::GameAnimationPlugin;
 use self::arena::ArenaPlugin;
 use self::bullet::BulletPlugin;
 use self::bumpin::BumpinPlugin;
@@ -41,6 +43,7 @@ impl Plugin for GamePlugin {
         app.add_plugin(BumpinPlugin);
         app.add_plugin(CrosshairPlugin);
         app.add_plugin(BulletPlugin);
+        app.add_plugin(GameAnimationPlugin);
 
         app.add_system(enable_disable_when_in_game_or_not);
 

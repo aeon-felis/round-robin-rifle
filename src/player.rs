@@ -1,10 +1,12 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use bevy_tnua::{
-    TnuaFreeFallBehavior, TnuaPlatformerBundle, TnuaPlatformerConfig, TnuaPlatformerControls,
+    TnuaAnimatingState, TnuaFreeFallBehavior, TnuaPlatformerAnimatingOutput, TnuaPlatformerBundle,
+    TnuaPlatformerConfig, TnuaPlatformerControls,
 };
 use leafwing_input_manager::prelude::*;
 
+use crate::animation::{GltfSceneHandler, HumanAnimationState};
 use crate::bumpin::{BumpInitiator, BumpStatus};
 use crate::camera::CameraFollow;
 use crate::level_reloading::{CleanOnLevelReload, LevelPopulationSet};
@@ -35,25 +37,16 @@ enum PlayerAction {
     Shoot,
 }
 
-fn setup_player(
-    mut commands: Commands,
-    mut mesh_assets: ResMut<Assets<Mesh>>,
-    mut material_assets: ResMut<Assets<StandardMaterial>>,
-) {
+fn setup_player(mut commands: Commands, asset_server: Res<AssetServer>) {
     let mut cmd = commands.spawn_empty();
     cmd.insert(CleanOnLevelReload);
-    cmd.insert(PbrBundle {
-        mesh: mesh_assets.add(Mesh::from(shape::Capsule {
-            radius: 1.0,
-            rings: 10,
-            depth: 1.0,
-            latitudes: 10,
-            longitudes: 10,
-            uv_profile: shape::CapsuleUvProfile::Fixed,
-        })),
-        material: material_assets.add(Color::ORANGE.into()),
-        transform: Transform::from_xyz(0.0, 2.0, 0.0),
+    cmd.insert(SceneBundle {
+        scene: asset_server.load("human.glb#Scene0"),
+        transform: Transform::from_xyz(0.0, 2.0, 0.0).looking_to(Vec3::Z, Vec3::Y),
         ..Default::default()
+    });
+    cmd.insert(GltfSceneHandler {
+        names_from: asset_server.load("human.glb"),
     });
 
     cmd.insert(RigidBody::Dynamic);
@@ -88,6 +81,8 @@ fn setup_player(
             turning_angvel: 10.0,
         },
     ));
+    cmd.insert(TnuaPlatformerAnimatingOutput::default());
+    cmd.insert(TnuaAnimatingState::<HumanAnimationState>::default());
 
     cmd.insert(BumpInitiator);
     cmd.insert(BumpStatus::default());
