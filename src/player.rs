@@ -31,6 +31,9 @@ impl Plugin for PlayerPlugin {
     }
 }
 
+#[derive(Component)]
+pub struct IsPlayer;
+
 #[derive(Actionlike, Clone, Debug)]
 enum PlayerAction {
     Run,
@@ -94,6 +97,7 @@ fn setup_player(mut commands: Commands, asset_server: Res<AssetServer>) {
     cmd.insert(Killable { killed: false });
     cmd.insert(ScoreHaver::new("Player"));
     cmd.insert(Aimedatable::default());
+    cmd.insert(IsPlayer);
 
     cmd.insert(InputManagerBundle::<PlayerAction> {
         action_state: ActionState::default(),

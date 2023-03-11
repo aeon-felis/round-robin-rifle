@@ -69,25 +69,26 @@ impl Plugin for GamePlugin {
 }
 
 fn enable_disable_when_in_game_or_not(
-    mut already_in_game: Local<Option<bool>>,
     state: Res<State<AppState>>,
     mut rapier_configuration: ResMut<RapierConfiguration>,
     mut windows_query: Query<&mut Window, With<PrimaryWindow>>,
 ) {
-    let in_game = state.0 == AppState::Game;
-    if *already_in_game == Some(in_game) {
-        return;
-    }
-    rapier_configuration.physics_pipeline_active = in_game;
+    let (enable_physics, allow_cursor) = match state.0 {
+        AppState::MainMenu => (false, true),
+        AppState::PauseMenu => (false, true),
+        AppState::LoadLevel => (false, true),
+        AppState::Game => (true, false),
+        AppState::GameOver => (true, true),
+    };
+    rapier_configuration.physics_pipeline_active = enable_physics;
     if let Ok(mut window) = windows_query.get_single_mut() {
-        window.cursor.grab_mode = if in_game {
-            CursorGrabMode::Locked
-        } else {
+        window.cursor.grab_mode = if allow_cursor {
             CursorGrabMode::None
+        } else {
+            CursorGrabMode::Locked
         };
-        window.cursor.visible = !in_game;
+        window.cursor.visible = allow_cursor;
     }
-    *already_in_game = Some(in_game);
 }
 
 mod collision_groups {
