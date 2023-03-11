@@ -10,6 +10,7 @@ mod menu;
 mod opponent;
 mod player;
 mod rifle;
+mod score;
 mod utils;
 
 use bevy::prelude::*;
@@ -31,6 +32,7 @@ use self::player::PlayerPlugin;
 pub struct GamePlugin;
 pub use self::menu::MenuActionForKbgp;
 use self::rifle::RiflePlugin;
+use self::score::ScorePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
@@ -47,6 +49,7 @@ impl Plugin for GamePlugin {
         app.add_plugin(BulletPlugin);
         app.add_plugin(GameAnimationPlugin);
         app.add_plugin(KillingPlugin);
+        app.add_plugin(ScorePlugin);
 
         app.add_system(enable_disable_when_in_game_or_not);
 

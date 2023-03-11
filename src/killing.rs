@@ -6,6 +6,7 @@ use crate::bullet::Bullet;
 use crate::bumpin::BumpStatus;
 use crate::collision_groups;
 use crate::menu::AppState;
+use crate::score::ScoreHaver;
 use crate::utils::entities_ordered_by_type;
 
 pub struct KillingPlugin;
@@ -32,6 +33,7 @@ fn handle_bullet_hits(
         &mut Velocity,
     )>,
     mut commands: Commands,
+    mut score_havers_query: Query<&mut ScoreHaver>,
 ) {
     for event in reader.iter() {
         let CollisionEvent::Started(e1, e2, _) = event else { continue };
@@ -53,5 +55,9 @@ fn handle_bullet_hits(
         solver_groups.filters = collision_groups::GENERAL;
         velocity.linvel = Vec3::Y * 3.0;
         velocity.angvel = Quat::from_axis_angle(transform.right(), 1.0).xyz();
+
+        if let Ok(mut score_haver) = score_havers_query.get_mut(*shooter) {
+            score_haver.score += 1;
+        }
     }
 }

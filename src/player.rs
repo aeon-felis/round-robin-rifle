@@ -13,6 +13,7 @@ use crate::killing::Killable;
 use crate::level_reloading::{CleanOnLevelReload, LevelPopulationSet};
 use crate::menu::AppState;
 use crate::rifle::{AimElevation, RifleHolder, ShootCommand};
+use crate::score::ScoreHaver;
 use crate::{collision_groups, ShootingSequenceSet};
 
 pub struct PlayerPlugin;
@@ -90,6 +91,7 @@ fn setup_player(mut commands: Commands, asset_server: Res<AssetServer>) {
     cmd.insert(RifleHolder::NoRifle);
     cmd.insert(AimElevation(0.0));
     cmd.insert(Killable { killed: false });
+    cmd.insert(ScoreHaver::new("Player"));
 
     cmd.insert(InputManagerBundle::<PlayerAction> {
         action_state: ActionState::default(),
