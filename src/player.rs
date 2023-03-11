@@ -125,7 +125,9 @@ fn setup_player(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
     });
 
-    cmd.insert(CameraFollow { direction: -Vec3::Z });
+    cmd.insert(CameraFollow {
+        direction: -Vec3::Z,
+    });
 }
 
 fn player_controls(
