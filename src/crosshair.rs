@@ -17,6 +17,11 @@ struct Crosshair {
     owner: Entity,
 }
 
+#[derive(Component)]
+pub struct Intimidatable {
+    pub intimidated_by: Option<Entity>,
+}
+
 fn create_crossair(
     rifles_query: Query<Entity, Added<RifleStatus>>,
     mut commands: Commands,
@@ -38,14 +43,18 @@ fn update_crosshairs(
     rifles_query: Query<(&RifleStatus, &GlobalTransform)>,
     rapier_context: Res<RapierContext>,
     mut commands: Commands,
+    mut intimidatables_query: Query<&mut Intimidatable>,
 ) {
+    for mut intimidatable in intimidatables_query.iter_mut() {
+        intimidatable.intimidated_by = None;
+    }
     for (crosshair_entity, crosshair, mut visibility, mut transform) in crossairs_query.iter_mut() {
         transform.translation = Vec3::new(0.0, 2.0, 0.0);
         if let Ok((rifle_status, rifle_transform)) = rifles_query.get(crosshair.owner) {
             if let RifleStatus::Equiped(holder) = rifle_status {
                 let (_, rifle_rotation, rifle_translation) =
                     rifle_transform.to_scale_rotation_translation();
-                if let Some((_, intersection)) = rapier_context.cast_ray_and_get_normal(
+                if let Some((target_entity, intersection)) = rapier_context.cast_ray_and_get_normal(
                     rifle_translation,
                     rifle_rotation.mul_vec3(-Vec3::Z),
                     f32::INFINITY,
@@ -56,6 +65,10 @@ fn update_crosshairs(
                     *visibility = Visibility::Inherited;
                     transform.translation = intersection.point;
                     transform.look_at(rifle_translation, Vec3::Y);
+
+                    if let Ok(mut intimidatable) = intimidatables_query.get_mut(target_entity) {
+                        intimidatable.intimidated_by = Some(*holder);
+                    }
                 } else {
                     *visibility = Visibility::Hidden;
                 }

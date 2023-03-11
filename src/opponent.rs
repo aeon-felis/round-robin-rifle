@@ -8,6 +8,7 @@ use bevy_tnua::{
 use crate::animation::{GltfSceneHandler, HumanAnimationState};
 use crate::bumpin::BumpStatus;
 use crate::collision_groups;
+use crate::crosshair::Intimidatable;
 use crate::killing::Killable;
 use crate::level_reloading::{CleanOnLevelReload, LevelPopulationSet};
 use crate::menu::AppState;
@@ -75,4 +76,7 @@ fn setup_opponents(mut commands: Commands, asset_server: Res<AssetServer>) {
     cmd.insert(RifleHolder::NoRifle);
     cmd.insert(AimElevation(0.0));
     cmd.insert(Killable { killed: false });
+    cmd.insert(Intimidatable {
+        intimidated_by: None,
+    });
 }

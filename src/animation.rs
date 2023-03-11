@@ -5,6 +5,7 @@ use bevy::prelude::*;
 use bevy::utils::HashMap;
 use bevy_tnua::{TnuaAnimatingState, TnuaPlatformerAnimatingOutput, TnuaSystemSet};
 
+use crate::crosshair::Intimidatable;
 use crate::killing::Killable;
 use crate::menu::AppState;
 
@@ -66,31 +67,41 @@ pub enum HumanAnimationState {
     Running(f32),
     Jumping,
     Dead,
+    HandsUp,
 }
 
+#[allow(clippy::type_complexity)]
 fn animate(
     mut humans_query: Query<(
         &mut TnuaAnimatingState<HumanAnimationState>,
         &TnuaPlatformerAnimatingOutput,
         &AnimationsHandler,
         &Killable,
+        Option<&Intimidatable>,
     )>,
     mut animation_players_query: Query<&mut AnimationPlayer>,
 ) {
-    for (mut animating_state, animation_output, handler, killable) in humans_query.iter_mut() {
+    for (mut animating_state, animation_output, handler, killable, intimidatable) in
+        humans_query.iter_mut()
+    {
         let Ok(mut player) = animation_players_query.get_mut(handler.owner_entity) else { continue} ;
-        match animating_state.update_by_discriminant({
+        match animating_state.update_by_discriminant('state: {
             if killable.killed {
-                HumanAnimationState::Dead
-            } else if animation_output.jumping_velocity.is_some() {
-                HumanAnimationState::Jumping
-            } else {
-                let speed = animation_output.running_velocity.length();
-                if 0.01 < speed {
-                    HumanAnimationState::Running(0.1 * speed)
-                } else {
-                    HumanAnimationState::Standing
+                break 'state HumanAnimationState::Dead;
+            }
+            if let Some(intimidatable) = intimidatable {
+                if intimidatable.intimidated_by.is_some() {
+                    break 'state HumanAnimationState::HandsUp;
                 }
+            }
+            if animation_output.jumping_velocity.is_some() {
+                break 'state HumanAnimationState::Jumping;
+            }
+            let speed = animation_output.running_velocity.length();
+            if 0.01 < speed {
+                break 'state HumanAnimationState::Running(0.1 * speed);
+            } else {
+                break 'state HumanAnimationState::Standing;
             }
         }) {
             bevy_tnua::TnuaAnimatingStateDirective::Maintain { state } => {
@@ -135,6 +146,14 @@ fn animate(
                             Duration::from_secs_f32(0.1),
                         )
                         .set_speed(1.0);
+                }
+                HumanAnimationState::HandsUp => {
+                    player
+                        .play_with_transition(
+                            handler.animations["HandsUp"].clone(),
+                            Duration::from_secs_f32(0.1),
+                        )
+                        .set_speed(1.5);
                 }
             },
         }
