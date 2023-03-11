@@ -5,9 +5,10 @@ use bevy::prelude::*;
 use bevy::utils::HashMap;
 use bevy_tnua::{TnuaAnimatingState, TnuaPlatformerAnimatingOutput, TnuaSystemSet};
 
-use crate::crosshair::Intimidatable;
+use crate::crosshair::{Aimedatable, Intimidatable};
 use crate::killing::Killable;
 use crate::menu::AppState;
+use crate::opponent_behavior::OpponentBehavior;
 
 pub struct GameAnimationPlugin;
 
@@ -68,6 +69,7 @@ pub enum HumanAnimationState {
     Jumping,
     Dead,
     HandsUp,
+    Panic,
 }
 
 #[allow(clippy::type_complexity)]
@@ -77,22 +79,32 @@ fn animate(
         &TnuaPlatformerAnimatingOutput,
         &AnimationsHandler,
         &Killable,
+        &Aimedatable,
         Option<&Intimidatable>,
+        Option<&OpponentBehavior>,
     )>,
     mut animation_players_query: Query<&mut AnimationPlayer>,
 ) {
-    for (mut animating_state, animation_output, handler, killable, intimidatable) in
-        humans_query.iter_mut()
+    for (
+        mut animating_state,
+        animation_output,
+        handler,
+        killable,
+        aimedatable,
+        intimidatable,
+        behavior,
+    ) in humans_query.iter_mut()
     {
         let Ok(mut player) = animation_players_query.get_mut(handler.owner_entity) else { continue} ;
         match animating_state.update_by_discriminant('state: {
             if killable.killed {
                 break 'state HumanAnimationState::Dead;
             }
-            if let Some(intimidatable) = intimidatable {
-                if intimidatable.intimidated_by.is_some() {
-                    break 'state HumanAnimationState::HandsUp;
-                }
+            if intimidatable.is_some() && aimedatable.aimed_at_by.is_some() {
+                break 'state HumanAnimationState::HandsUp;
+            }
+            if matches!(behavior, Some(OpponentBehavior::Panic { .. })) {
+                break 'state HumanAnimationState::Panic;
             }
             if animation_output.jumping_velocity.is_some() {
                 break 'state HumanAnimationState::Jumping;
@@ -154,6 +166,15 @@ fn animate(
                             Duration::from_secs_f32(0.1),
                         )
                         .set_speed(1.5);
+                }
+                HumanAnimationState::Panic => {
+                    player
+                        .play_with_transition(
+                            handler.animations["Panic"].clone(),
+                            Duration::from_secs_f32(0.1),
+                        )
+                        .set_speed(2.0)
+                        .repeat();
                 }
             },
         }

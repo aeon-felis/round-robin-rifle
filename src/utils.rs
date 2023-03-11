@@ -1,3 +1,5 @@
+use bevy::prelude::Vec3;
+
 pub trait ReorderItem {
     type Type;
 
@@ -39,3 +41,8 @@ macro_rules! entities_ordered_by_type {
 }
 #[allow(unused_imports)]
 pub(crate) use entities_ordered_by_type;
+
+pub fn project_by_normal(vector: Vec3, plane_normal: Vec3) -> Vec3 {
+    let displacement = vector.dot(plane_normal);
+    vector - plane_normal * (displacement / plane_normal.length_squared())
+}

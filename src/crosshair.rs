@@ -17,10 +17,13 @@ struct Crosshair {
     owner: Entity,
 }
 
-#[derive(Component)]
-pub struct Intimidatable {
-    pub intimidated_by: Option<Entity>,
+#[derive(Component, Default)]
+pub struct Aimedatable {
+    pub aimed_at_by: Option<Entity>,
 }
+
+#[derive(Component)]
+pub struct Intimidatable;
 
 fn create_crossair(
     rifles_query: Query<Entity, Added<RifleStatus>>,
@@ -43,10 +46,10 @@ fn update_crosshairs(
     rifles_query: Query<(&RifleStatus, &GlobalTransform)>,
     rapier_context: Res<RapierContext>,
     mut commands: Commands,
-    mut intimidatables_query: Query<&mut Intimidatable>,
+    mut aimedatables_query: Query<&mut Aimedatable>,
 ) {
-    for mut intimidatable in intimidatables_query.iter_mut() {
-        intimidatable.intimidated_by = None;
+    for mut aimedatable in aimedatables_query.iter_mut() {
+        aimedatable.aimed_at_by = None;
     }
     for (crosshair_entity, crosshair, mut visibility, mut transform) in crossairs_query.iter_mut() {
         transform.translation = Vec3::new(0.0, 2.0, 0.0);
@@ -66,8 +69,8 @@ fn update_crosshairs(
                     transform.translation = intersection.point;
                     transform.look_at(rifle_translation, Vec3::Y);
 
-                    if let Ok(mut intimidatable) = intimidatables_query.get_mut(target_entity) {
-                        intimidatable.intimidated_by = Some(*holder);
+                    if let Ok(mut aimedatable) = aimedatables_query.get_mut(target_entity) {
+                        aimedatable.aimed_at_by = Some(*holder);
                     }
                 } else {
                     *visibility = Visibility::Hidden;

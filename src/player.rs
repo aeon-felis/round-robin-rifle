@@ -9,6 +9,7 @@ use leafwing_input_manager::prelude::*;
 use crate::animation::{GltfSceneHandler, HumanAnimationState};
 use crate::bumpin::{BumpInitiator, BumpStatus};
 use crate::camera::CameraFollow;
+use crate::crosshair::Aimedatable;
 use crate::killing::Killable;
 use crate::level_reloading::{CleanOnLevelReload, LevelPopulationSet};
 use crate::menu::AppState;
@@ -92,6 +93,7 @@ fn setup_player(mut commands: Commands, asset_server: Res<AssetServer>) {
     cmd.insert(AimElevation(0.0));
     cmd.insert(Killable { killed: false });
     cmd.insert(ScoreHaver::new("Player"));
+    cmd.insert(Aimedatable::default());
 
     cmd.insert(InputManagerBundle::<PlayerAction> {
         action_state: ActionState::default(),

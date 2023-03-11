@@ -8,6 +8,7 @@ mod killing;
 mod level_reloading;
 mod menu;
 mod opponent;
+mod opponent_behavior;
 mod player;
 mod rifle;
 mod score;
@@ -27,6 +28,7 @@ use self::killing::KillingPlugin;
 use self::level_reloading::LevelReloadingPlugin;
 use self::menu::{AppState, MenuPlugin};
 use self::opponent::OpponentPlugin;
+use self::opponent_behavior::OpponentBehaviorPlugin;
 use self::player::PlayerPlugin;
 
 pub struct GamePlugin;
@@ -50,6 +52,7 @@ impl Plugin for GamePlugin {
         app.add_plugin(GameAnimationPlugin);
         app.add_plugin(KillingPlugin);
         app.add_plugin(ScorePlugin);
+        app.add_plugin(OpponentBehaviorPlugin);
 
         app.add_system(enable_disable_when_in_game_or_not);
 
