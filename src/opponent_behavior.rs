@@ -26,7 +26,6 @@ pub enum OpponentBehavior {
     #[default]
     GetRifle,
     FindTarget,
-    WaitToShoot(Timer),
     Shoot {
         rifle: Entity,
     },
@@ -37,6 +36,19 @@ pub enum OpponentBehavior {
     HandsUp {
         aimed_at_by: Entity,
     },
+    WaitBefore {
+        timer: Timer,
+        followup: Option<Box<OpponentBehavior>>,
+    },
+}
+
+impl OpponentBehavior {
+    fn wait_before(seconds: f32, followup: OpponentBehavior) -> Self {
+        Self::WaitBefore {
+            timer: Timer::from_seconds(seconds, TimerMode::Once),
+            followup: Some(Box::new(followup)),
+        }
+    }
 }
 
 fn decide_what_to_do(
@@ -49,24 +61,28 @@ fn decide_what_to_do(
     let Ok((rifle, rifle_status, rifle_transform)) = rifles_query.get_single() else { return };
     let rifle_position = rifle_transform.translation();
     for (entity, mut behavior) in opponents_query.iter_mut() {
+        if let OpponentBehavior::WaitBefore { timer, followup } = behavior.as_mut() {
+            if timer.tick(time.delta()).finished() {
+                *behavior = *(followup.take().expect("followup should never be empty"));
+            }
+            continue;
+        }
         if let RifleStatus::Equiped(holder) = rifle_status {
             #[allow(clippy::collapsible_else_if)]
             if *holder == entity {
-                if let OpponentBehavior::WaitToShoot(timer) = behavior.as_mut() {
-                    if timer.tick(time.delta()).finished() {
-                        *behavior = OpponentBehavior::Shoot { rifle };
-                    }
-                } else if aimmedatables_query
+                if aimmedatables_query
                     .iter()
                     .any(|aimedatable| aimedatable.aimed_at_by == Some(*holder))
                 {
                     *behavior =
-                        OpponentBehavior::WaitToShoot(Timer::from_seconds(1.0, TimerMode::Once));
+                        OpponentBehavior::wait_before(1.0, OpponentBehavior::Shoot { rifle });
                 } else {
-                    *behavior = OpponentBehavior::FindTarget;
+                    *behavior = OpponentBehavior::wait_before(1.0, OpponentBehavior::FindTarget);
                 }
             } else {
-                if let Some(aimed_at_by) = aimmedatables_query
+                if matches!(*behavior, OpponentBehavior::Shoot { .. }) {
+                    *behavior = OpponentBehavior::wait_before(1.0, OpponentBehavior::GetRifle);
+                } else if let Some(aimed_at_by) = aimmedatables_query
                     .get(entity)
                     .ok()
                     .and_then(|aimedatable| aimedatable.aimed_at_by)
@@ -92,6 +108,8 @@ fn decide_what_to_do(
                     };
                 }
             }
+        } else if matches!(*behavior, OpponentBehavior::Shoot { .. }) {
+            *behavior = OpponentBehavior::wait_before(1.0, OpponentBehavior::GetRifle);
         } else {
             *behavior = OpponentBehavior::GetRifle;
         }
@@ -150,7 +168,6 @@ fn process_behavior(
                     controls.desired_forward = direction_to_killable;
                 }
             }
-            OpponentBehavior::WaitToShoot(_) => {}
             OpponentBehavior::Shoot { rifle } => {
                 shoot_commands_writer.send(ShootCommand {
                     shooter: entity,
@@ -181,6 +198,10 @@ fn process_behavior(
                     transform_from_danger.transform_point(*run_direction_in_shooter_coord);
                 controls.desired_velocity = panic_direction;
                 controls.desired_forward = panic_direction;
+            }
+            OpponentBehavior::WaitBefore { .. } => {
+                controls.desired_velocity = Vec3::ZERO;
+                controls.desired_forward = Vec3::ZERO;
             }
         }
     }
