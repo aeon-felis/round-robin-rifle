@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_tnua::TnuaPlatformerControls;
+use bevy_turborand::{DelegatedRng, GlobalRng};
 use float_ord::FloatOrd;
 
 use crate::crosshair::Aimedatable;
@@ -31,6 +32,10 @@ pub enum OpponentBehavior {
     },
     Panic {
         run_from: Vec3,
+        run_direction_in_shooter_coord: Vec3,
+    },
+    HandsUp {
+        aimed_at_by: Entity,
     },
 }
 
@@ -39,11 +44,13 @@ fn decide_what_to_do(
     rifles_query: Query<(Entity, &RifleStatus, &GlobalTransform)>,
     aimmedatables_query: Query<&Aimedatable>,
     mut opponents_query: Query<(Entity, &mut OpponentBehavior)>,
+    mut rng: ResMut<GlobalRng>,
 ) {
     let Ok((rifle, rifle_status, rifle_transform)) = rifles_query.get_single() else { return };
     let rifle_position = rifle_transform.translation();
     for (entity, mut behavior) in opponents_query.iter_mut() {
         if let RifleStatus::Equiped(holder) = rifle_status {
+            #[allow(clippy::collapsible_else_if)]
             if *holder == entity {
                 if let OpponentBehavior::WaitToShoot(timer) = behavior.as_mut() {
                     if timer.tick(time.delta()).finished() {
@@ -59,9 +66,31 @@ fn decide_what_to_do(
                     *behavior = OpponentBehavior::FindTarget;
                 }
             } else {
-                *behavior = OpponentBehavior::Panic {
-                    run_from: rifle_position,
-                };
+                if let Some(aimed_at_by) = aimmedatables_query
+                    .get(entity)
+                    .ok()
+                    .and_then(|aimedatable| aimedatable.aimed_at_by)
+                {
+                    *behavior = OpponentBehavior::HandsUp { aimed_at_by };
+                } else if let OpponentBehavior::Panic {
+                    run_from,
+                    run_direction_in_shooter_coord: _,
+                } = behavior.as_mut()
+                {
+                    *run_from = rifle_position;
+                } else {
+                    *behavior = OpponentBehavior::Panic {
+                        run_from: rifle_position,
+                        run_direction_in_shooter_coord: {
+                            let mut direction =
+                                Quat::from_rotation_y(0.5 * rng.f32_normalized()).mul_vec3(Vec3::X);
+                            if rng.bool() {
+                                direction *= -1.0;
+                            }
+                            direction
+                        },
+                    };
+                }
             }
         } else {
             *behavior = OpponentBehavior::GetRifle;
@@ -77,7 +106,8 @@ fn process_behavior(
         &GlobalTransform,
         &mut TnuaPlatformerControls,
     )>,
-    killables_query: Query<(Entity, &Killable, &GlobalTransform)>,
+    killables_query: Query<(Entity, &Killable, &GlobalTransform), With<OpponentBehavior>>,
+    transform_query: Query<&GlobalTransform>,
     mut shoot_commands_writer: EventWriter<ShootCommand>,
 ) {
     let Ok(rifle_transform) = rifles_query.get_single() else { return };
@@ -127,11 +157,30 @@ fn process_behavior(
                     rifle: *rifle,
                 });
             }
-            OpponentBehavior::Panic { run_from } => {
-                let run_direction = project_by_normal(transform.translation() - *run_from, Vec3::Y)
-                    .normalize_or_zero();
-                controls.desired_velocity = run_direction;
-                controls.desired_forward = run_direction;
+            OpponentBehavior::HandsUp { aimed_at_by } => {
+                controls.desired_velocity = Vec3::ZERO;
+                controls.desired_forward = match transform_query.get(*aimed_at_by) {
+                    Ok(aimer_transform) => project_by_normal(
+                        aimer_transform.translation() - transform.translation(),
+                        Vec3::Y,
+                    )
+                    .normalize_or_zero(),
+                    Err(_) => Vec3::ZERO,
+                };
+            }
+            OpponentBehavior::Panic {
+                run_from,
+                run_direction_in_shooter_coord,
+            } => {
+                let direction_from_danger =
+                    project_by_normal(transform.translation() - *run_from, Vec3::Y)
+                        .normalize_or_zero();
+                let transform_from_danger =
+                    Transform::default().looking_to(direction_from_danger, Vec3::Y);
+                let panic_direction =
+                    transform_from_danger.transform_point(*run_direction_in_shooter_coord);
+                controls.desired_velocity = panic_direction;
+                controls.desired_forward = panic_direction;
             }
         }
     }
