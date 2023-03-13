@@ -30,16 +30,15 @@ impl Plugin for OpponentPlugin {
 }
 
 fn setup_opponents(mut commands: Commands, asset_server: Res<AssetServer>) {
-    // const NUM_OPPONENTS: usize = 8;
-    const NUM_OPPONENTS: usize = 1;
+    const NUM_OPPONENTS: usize = 8;
     for idx in 0..NUM_OPPONENTS {
         let angle = idx as f32 * 2.0 * PI / NUM_OPPONENTS as f32;
-        let position = Quat::from_rotation_y(angle).mul_vec3(Vec3::X * 20.0);
+        let position = Quat::from_rotation_y(angle).mul_vec3(Vec3::X * 20.0) + 2.0 * Vec3::Y;
         let mut cmd = commands.spawn_empty();
         cmd.insert(CleanOnLevelReload);
         cmd.insert(SceneBundle {
             scene: asset_server.load("human.glb#Scene0"),
-            transform: Transform::from_xyz(position.x, 2.0, position.y),
+            transform: Transform::from_translation(position),
             ..Default::default()
         });
         cmd.insert(GltfSceneHandler {
