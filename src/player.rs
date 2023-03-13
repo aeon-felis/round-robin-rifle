@@ -118,19 +118,6 @@ fn setup_player(mut commands: Commands, asset_server: Res<AssetServer>) {
                 input_map.insert(GamepadButtonType::RightTrigger, PlayerAction::Shoot);
                 input_map.insert(GamepadButtonType::RightTrigger2, PlayerAction::Shoot);
             }
-
-            // TODO: remove these before submitting the game:
-            input_map.insert(
-                VirtualDPad {
-                    up: KeyCode::I.into(),
-                    down: KeyCode::K.into(),
-                    left: KeyCode::J.into(),
-                    right: KeyCode::L.into(),
-                },
-                PlayerAction::TurnWithGamepad,
-            );
-            input_map.insert(KeyCode::Semicolon, PlayerAction::Shoot);
-
             input_map
         },
     });
