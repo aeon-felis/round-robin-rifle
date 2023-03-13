@@ -66,6 +66,7 @@ fn menu_layout(egui_context: &egui::Context, dlg: impl FnOnce(&mut egui::Ui)) {
 #[derive(PartialEq)]
 enum FocusLabel {
     Start,
+    #[cfg(not(target_arch = "wasm32"))]
     BackToMainMenu,
     Exit,
 }

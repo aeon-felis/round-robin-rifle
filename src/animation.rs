@@ -30,28 +30,43 @@ pub struct GltfSceneHandler {
 
 #[derive(Component)]
 pub struct AnimationsHandler {
-    pub owner_entity: Entity,
+    pub animation_player_entity: Entity,
     pub animations: HashMap<String, Handle<AnimationClip>>,
 }
 
+#[derive(Component)]
+struct AnimationPlayerAlreadyRegistered;
+
 fn animation_patcher_system(
-    animation_players_query: Query<Entity, Added<AnimationPlayer>>,
+    animation_players_query: Query<
+        Entity,
+        (
+            With<AnimationPlayer>,
+            Without<AnimationPlayerAlreadyRegistered>,
+        ),
+    >,
     parents_query: Query<&Parent>,
     scene_handlers_query: Query<&GltfSceneHandler>,
     gltf_assets: Res<Assets<Gltf>>,
     mut commands: Commands,
 ) {
-    for owner_entity in animation_players_query.iter() {
-        let mut entity = owner_entity;
+    for animation_player_entity in animation_players_query.iter() {
+        let mut entity = animation_player_entity;
         loop {
             if let Ok(GltfSceneHandler { names_from }) = scene_handlers_query.get(entity) {
-                let gltf = gltf_assets.get(names_from).unwrap();
+                let Some(gltf) = gltf_assets.get(names_from) else {
+                    warn!("AnimationPlayer was created but the GLTF is not fully loaded yet");
+                    break;
+                };
                 let mut cmd = commands.entity(entity);
                 cmd.remove::<GltfSceneHandler>();
                 cmd.insert(AnimationsHandler {
-                    owner_entity,
+                    animation_player_entity,
                     animations: gltf.named_animations.clone(),
                 });
+                commands
+                    .entity(animation_player_entity)
+                    .insert(AnimationPlayerAlreadyRegistered);
                 break;
             }
             entity = if let Ok(parent) = parents_query.get(entity) {
@@ -95,7 +110,7 @@ fn animate(
         behavior,
     ) in humans_query.iter_mut()
     {
-        let Ok(mut player) = animation_players_query.get_mut(handler.owner_entity) else { continue} ;
+        let Ok(mut player) = animation_players_query.get_mut(handler.animation_player_entity) else { continue} ;
         match animating_state.update_by_discriminant('state: {
             if killable.killed {
                 break 'state HumanAnimationState::Dead;
