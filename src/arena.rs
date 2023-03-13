@@ -17,7 +17,7 @@ fn setup_arena(
     mut mesh_assets: ResMut<Assets<Mesh>>,
     mut material_assets: ResMut<Assets<StandardMaterial>>,
 ) {
-    const HALF_SIDE: f32 = 64.0;
+    const HALF_SIDE: f32 = 512.0;
 
     let mesh = Mesh::from(shape::Box {
         min_x: -HALF_SIDE,
