@@ -145,9 +145,19 @@ fn game_over_menu(
     menu_layout(egui_context.ctx_mut(), |ui| {
         ui.label(egui::RichText::new("Game Over!").size(24.0).strong());
         if player_query.iter().any(|killable| killable.killed) {
-            ui.label(egui::RichText::new("You Died...").size(24.0).strong().color(egui::Color32::RED));
+            ui.label(
+                egui::RichText::new("You Died...")
+                    .size(24.0)
+                    .strong()
+                    .color(egui::Color32::RED),
+            );
         } else {
-            ui.label(egui::RichText::new("You Survived!!!").size(24.0).strong().color(egui::Color32::GREEN));
+            ui.label(
+                egui::RichText::new("You Survived!!!")
+                    .size(24.0)
+                    .strong()
+                    .color(egui::Color32::GREEN),
+            );
         }
         if ui.button("Retry").kbgp_navigation().clicked() {
             state.set(AppState::LoadLevel);

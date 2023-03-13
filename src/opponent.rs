@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use bevy_tnua::{
@@ -28,13 +30,10 @@ impl Plugin for OpponentPlugin {
 }
 
 fn setup_opponents(mut commands: Commands, asset_server: Res<AssetServer>) {
-    for position in [
-        Vec2::new(-20.0, 0.0),
-        Vec2::new(-10.0, 0.0),
-        Vec2::new(0.0, 0.0),
-        Vec2::new(10.0, 0.0),
-        Vec2::new(20.0, 0.0),
-    ] {
+    const NUM_OPPONENTS: usize = 8;
+    for idx in 0..NUM_OPPONENTS {
+        let angle = idx as f32 * 2.0 * PI / NUM_OPPONENTS as f32;
+        let position = Quat::from_rotation_y(angle).mul_vec3(Vec3::X * 20.0);
         let mut cmd = commands.spawn_empty();
         cmd.insert(CleanOnLevelReload);
         cmd.insert(SceneBundle {

@@ -63,11 +63,13 @@ fn handle_bullet_hits(
             score_haver.score += 1;
         }
 
-        let remaining_alive = victims_query.iter().filter(|(killable, _, _, _, _)| ! killable.killed).count();
+        let remaining_alive = victims_query
+            .iter()
+            .filter(|(killable, _, _, _, _)| !killable.killed)
+            .count();
 
         if remaining_alive <= 1 {
             state.set(AppState::GameOver);
         }
-
     }
 }

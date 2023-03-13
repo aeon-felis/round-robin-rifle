@@ -49,12 +49,16 @@ pub struct ShootCommand {
     pub rifle: Entity,
 }
 
-fn setup_rifle(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup_rifle(mut commands: Commands, asset_server: Res<AssetServer>, mut rng: ResMut<GlobalRng>) {
     let mut cmd = commands.spawn_empty();
     cmd.insert(CleanOnLevelReload);
     cmd.insert(SceneBundle {
         scene: asset_server.load("rifle.glb#Scene0"),
-        transform: Transform::from_xyz(-2.0, 1.0, 5.0),
+        transform: Transform::from_xyz(
+            10.0 * rng.f32_normalized(),
+            10.0,
+            10.0 * rng.f32_normalized(),
+        ),
         ..Default::default()
     });
 

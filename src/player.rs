@@ -48,7 +48,7 @@ fn setup_player(mut commands: Commands, asset_server: Res<AssetServer>) {
     cmd.insert(CleanOnLevelReload);
     cmd.insert(SceneBundle {
         scene: asset_server.load("human.glb#Scene0"),
-        transform: Transform::from_xyz(0.0, 2.0, 10.0),
+        transform: Transform::from_xyz(0.0, 2.0, 0.0),
         ..Default::default()
     });
     cmd.insert(GltfSceneHandler {
