@@ -57,7 +57,7 @@ fn setup_opponents(mut commands: Commands, asset_server: Res<AssetServer>) {
 
         cmd.insert(TnuaPlatformerBundle::new_with_config(
             TnuaPlatformerConfig {
-                full_speed: 40.0,
+                full_speed: 20.0,
                 full_jump_height: 4.0,
                 up: Vec3::Y,
                 forward: -Vec3::Z,
@@ -74,7 +74,7 @@ fn setup_opponents(mut commands: Commands, asset_server: Res<AssetServer>) {
                 free_fall_behavior: TnuaFreeFallBehavior::LikeJumpShorten,
                 tilt_offset_angvel: 0.0,
                 tilt_offset_angacl: 0.0,
-                turning_angvel: 10.0,
+                turning_angvel: 5.0,
             },
         ));
         cmd.insert(TnuaPlatformerAnimatingOutput::default());

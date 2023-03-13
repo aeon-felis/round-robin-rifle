@@ -175,7 +175,11 @@ fn handle_shooting(
         }
 
         let (_, rotation, _) = transform.to_scale_rotation_translation();
-        velocity.linvel = rotation.mul_vec3(Vec3::new(10.0 * rng.f32_normalized(), 10.0, 20.0));
+        velocity.linvel = rotation.mul_vec3(Vec3::new(
+            15.0 * rng.f32_normalized(),
+            20.0,
+            15.0 * rng.f32_normalized(),
+        ));
         velocity.angvel = Quat::from_axis_angle(rotation.mul_vec3(Vec3::X), -PI).xyz() * 5.0;
     }
 }

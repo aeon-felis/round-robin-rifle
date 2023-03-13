@@ -25,7 +25,7 @@ fn setup_arena(
         min_y: -HALF_SIDE,
         max_y: HALF_SIDE,
         min_z: 0.0,
-        max_z: 1.0,
+        max_z: 60.0,
     });
     let collider = Collider::from_bevy_mesh(&mesh, &ComputedColliderShape::TriMesh).unwrap();
     let mesh = mesh_assets.add(mesh);
@@ -47,7 +47,7 @@ fn setup_arena(
         cmd.insert(PbrBundle {
             mesh: mesh.clone(),
             material: material_assets.add(Color::WHITE.into()),
-            transform: Transform::from_translation(HALF_SIDE * direction + HALF_SIDE * Vec3::Y)
+            transform: Transform::from_translation(-HALF_SIDE * direction + HALF_SIDE * Vec3::Y)
                 .looking_to(direction, Vec3::Y),
             ..Default::default()
         });
