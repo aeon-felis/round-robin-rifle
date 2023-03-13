@@ -6,7 +6,6 @@ use crate::bullet::Bullet;
 use crate::bumpin::BumpStatus;
 use crate::collision_groups;
 use crate::menu::AppState;
-use crate::player::IsPlayer;
 use crate::score::ScoreHaver;
 use crate::utils::entities_ordered_by_type;
 
@@ -33,7 +32,6 @@ fn handle_bullet_hits(
         &mut SolverGroups,
         &GlobalTransform,
         &mut Velocity,
-        Option<&IsPlayer>,
     )>,
     mut commands: Commands,
     mut score_havers_query: Query<&mut ScoreHaver>,
@@ -46,7 +44,8 @@ fn handle_bullet_hits(
         if *shooter == victim {
             continue;
         }
-        let (mut killable, mut locked_axes, mut solver_groups, transform, mut velocity, is_player) =
+
+        let (mut killable, mut locked_axes, mut solver_groups, transform, mut velocity) =
             victims_query.get_mut(victim).unwrap();
         if killable.killed {
             continue;
@@ -64,8 +63,11 @@ fn handle_bullet_hits(
             score_haver.score += 1;
         }
 
-        if is_player.is_some() {
+        let remaining_alive = victims_query.iter().filter(|(killable, _, _, _, _)| ! killable.killed).count();
+
+        if remaining_alive <= 1 {
             state.set(AppState::GameOver);
         }
+
     }
 }
