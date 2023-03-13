@@ -21,7 +21,7 @@ impl Plugin for OpponentBehaviorPlugin {
     }
 }
 
-#[derive(Component, Default)]
+#[derive(Component, Default, Debug)]
 pub enum OpponentBehavior {
     #[default]
     GetRifle,
@@ -49,6 +49,13 @@ impl OpponentBehavior {
             followup: Some(Box::new(followup)),
         }
     }
+
+    fn wait(seconds: f32) -> Self {
+        Self::WaitBefore {
+            timer: Timer::from_seconds(seconds, TimerMode::Once),
+            followup: None,
+        }
+    }
 }
 
 fn decide_what_to_do(
@@ -63,9 +70,13 @@ fn decide_what_to_do(
     for (entity, mut behavior) in opponents_query.iter_mut() {
         if let OpponentBehavior::WaitBefore { timer, followup } = behavior.as_mut() {
             if timer.tick(time.delta()).finished() {
-                *behavior = *(followup.take().expect("followup should never be empty"));
+                if let Some(followup) = followup.take() {
+                    *behavior = *followup;
+                    continue;
+                } // else branch follows through to select a behavior
+            } else {
+                continue;
             }
-            continue;
         }
         if let RifleStatus::Equiped(holder) = rifle_status {
             #[allow(clippy::collapsible_else_if)]
@@ -76,7 +87,7 @@ fn decide_what_to_do(
                 {
                     *behavior =
                         OpponentBehavior::wait_before(1.0, OpponentBehavior::Shoot { rifle });
-                } else {
+                } else if !matches!(*behavior, OpponentBehavior::FindTarget) {
                     *behavior = OpponentBehavior::wait_before(1.0, OpponentBehavior::FindTarget);
                 }
             } else {
@@ -95,17 +106,22 @@ fn decide_what_to_do(
                 {
                     *run_from = rifle_position;
                 } else {
-                    *behavior = OpponentBehavior::Panic {
-                        run_from: rifle_position,
-                        run_direction_in_shooter_coord: {
-                            let mut direction =
-                                Quat::from_rotation_y(0.5 * rng.f32_normalized()).mul_vec3(Vec3::X);
-                            if rng.bool() {
-                                direction *= -1.0;
-                            }
-                            direction
-                        },
-                    };
+                    if matches!(*behavior, OpponentBehavior::HandsUp { .. }) {
+                        *behavior = OpponentBehavior::wait(1.0);
+                    } else {
+                        *behavior = OpponentBehavior::Panic {
+                            run_from: rifle_position,
+                            run_direction_in_shooter_coord: {
+                                let mut direction =
+                                    Quat::from_rotation_y(0.5 * rng.f32_normalized())
+                                        .mul_vec3(Vec3::X);
+                                if rng.bool() {
+                                    direction *= -1.0;
+                                }
+                                direction
+                            },
+                        };
+                    }
                 }
             }
         } else if matches!(*behavior, OpponentBehavior::Shoot { .. }) {

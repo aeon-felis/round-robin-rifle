@@ -30,7 +30,8 @@ impl Plugin for OpponentPlugin {
 }
 
 fn setup_opponents(mut commands: Commands, asset_server: Res<AssetServer>) {
-    const NUM_OPPONENTS: usize = 8;
+    // const NUM_OPPONENTS: usize = 8;
+    const NUM_OPPONENTS: usize = 1;
     for idx in 0..NUM_OPPONENTS {
         let angle = idx as f32 * 2.0 * PI / NUM_OPPONENTS as f32;
         let position = Quat::from_rotation_y(angle).mul_vec3(Vec3::X * 20.0);
