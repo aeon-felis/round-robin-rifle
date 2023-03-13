@@ -124,7 +124,7 @@ fn process_behavior(
         &GlobalTransform,
         &mut TnuaPlatformerControls,
     )>,
-    killables_query: Query<(Entity, &Killable, &GlobalTransform), With<OpponentBehavior>>,
+    killables_query: Query<(Entity, &Killable, &GlobalTransform)>,
     transform_query: Query<&GlobalTransform>,
     mut shoot_commands_writer: EventWriter<ShootCommand>,
 ) {
