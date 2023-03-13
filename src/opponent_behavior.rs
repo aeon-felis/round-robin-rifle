@@ -6,6 +6,7 @@ use float_ord::FloatOrd;
 use crate::crosshair::Aimedatable;
 use crate::killing::Killable;
 use crate::menu::AppState;
+use crate::player::IsPlayer;
 use crate::rifle::{RifleStatus, ShootCommand};
 use crate::utils::project_by_normal;
 
@@ -67,6 +68,7 @@ fn decide_what_to_do(
     transforms_query: Query<&GlobalTransform>,
     mut opponents_query: Query<(Entity, &mut OpponentBehavior, &GlobalTransform)>,
     mut rng: ResMut<GlobalRng>,
+    players_query: Query<&IsPlayer>,
 ) {
     let Ok((rifle, rifle_status, rifle_transform)) = rifles_query.get_single() else { return };
     let rifle_position = rifle_transform.translation();
@@ -111,15 +113,20 @@ fn decide_what_to_do(
                         .ok()
                         .and_then(|(aimedatable, _)| {
                             let aimed_at_by = aimedatable.aimed_at_by?;
-                            let aimed_at_by_transform = transforms_query.get(aimed_at_by).ok()?;
-                            let vector_to_aimed_at_by = project_by_normal(
-                                aimed_at_by_transform.translation() - transform.translation(),
-                                Vec3::Y,
-                            );
-                            if MIN_DISTANCE_FOR_SHOOTING <= vector_to_aimed_at_by.length() {
+                            if players_query.contains(aimed_at_by) {
                                 Some(aimed_at_by)
                             } else {
-                                None
+                                let aimed_at_by_transform =
+                                    transforms_query.get(aimed_at_by).ok()?;
+                                let vector_to_aimed_at_by = project_by_normal(
+                                    aimed_at_by_transform.translation() - transform.translation(),
+                                    Vec3::Y,
+                                );
+                                if MIN_DISTANCE_FOR_SHOOTING <= vector_to_aimed_at_by.length() {
+                                    Some(aimed_at_by)
+                                } else {
+                                    None
+                                }
                             }
                         })
                 {
