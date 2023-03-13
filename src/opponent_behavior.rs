@@ -58,16 +58,19 @@ impl OpponentBehavior {
     }
 }
 
+const MIN_DISTANCE_FOR_SHOOTING: f32 = 25.0;
+
 fn decide_what_to_do(
     time: Res<Time>,
     rifles_query: Query<(Entity, &RifleStatus, &GlobalTransform)>,
-    aimmedatables_query: Query<&Aimedatable>,
-    mut opponents_query: Query<(Entity, &mut OpponentBehavior)>,
+    aimmedatables_query: Query<(&Aimedatable, &GlobalTransform)>,
+    transforms_query: Query<&GlobalTransform>,
+    mut opponents_query: Query<(Entity, &mut OpponentBehavior, &GlobalTransform)>,
     mut rng: ResMut<GlobalRng>,
 ) {
     let Ok((rifle, rifle_status, rifle_transform)) = rifles_query.get_single() else { return };
     let rifle_position = rifle_transform.translation();
-    for (entity, mut behavior) in opponents_query.iter_mut() {
+    for (entity, mut behavior, transform) in opponents_query.iter_mut() {
         if let OpponentBehavior::WaitBefore { timer, followup } = behavior.as_mut() {
             if timer.tick(time.delta()).finished() {
                 if let Some(followup) = followup.take() {
@@ -81,9 +84,18 @@ fn decide_what_to_do(
         if let RifleStatus::Equiped(holder) = rifle_status {
             #[allow(clippy::collapsible_else_if)]
             if *holder == entity {
+                let position = transform.translation();
                 if aimmedatables_query
                     .iter()
-                    .any(|aimedatable| aimedatable.aimed_at_by == Some(*holder))
+                    .any(|(aimedatable, aimedatable_transform)| {
+                        aimedatable.aimed_at_by == Some(*holder) && {
+                            let vector_to_aimedatable = project_by_normal(
+                                aimedatable_transform.translation() - position,
+                                Vec3::Y,
+                            );
+                            MIN_DISTANCE_FOR_SHOOTING < vector_to_aimedatable.length()
+                        }
+                    })
                 {
                     *behavior =
                         OpponentBehavior::wait_before(1.0, OpponentBehavior::Shoot { rifle });
@@ -93,10 +105,23 @@ fn decide_what_to_do(
             } else {
                 if matches!(*behavior, OpponentBehavior::Shoot { .. }) {
                     *behavior = OpponentBehavior::wait_before(1.0, OpponentBehavior::GetRifle);
-                } else if let Some(aimed_at_by) = aimmedatables_query
-                    .get(entity)
-                    .ok()
-                    .and_then(|aimedatable| aimedatable.aimed_at_by)
+                } else if let Some(aimed_at_by) =
+                    aimmedatables_query
+                        .get(entity)
+                        .ok()
+                        .and_then(|(aimedatable, _)| {
+                            let aimed_at_by = aimedatable.aimed_at_by?;
+                            let aimed_at_by_transform = transforms_query.get(aimed_at_by).ok()?;
+                            let vector_to_aimed_at_by = project_by_normal(
+                                aimed_at_by_transform.translation() - transform.translation(),
+                                Vec3::Y,
+                            );
+                            if MIN_DISTANCE_FOR_SHOOTING <= vector_to_aimed_at_by.length() {
+                                Some(aimed_at_by)
+                            } else {
+                                None
+                            }
+                        })
                 {
                     *behavior = OpponentBehavior::HandsUp { aimed_at_by };
                 } else if let OpponentBehavior::Panic {
@@ -113,10 +138,9 @@ fn decide_what_to_do(
                             run_from: rifle_position,
                             run_direction_in_shooter_coord: {
                                 let mut direction =
-                                    Quat::from_rotation_y(0.5 * rng.f32_normalized())
-                                        .mul_vec3(Vec3::X);
+                                    Quat::from_rotation_y(0.5 * rng.f32()).mul_vec3(Vec3::X);
                                 if rng.bool() {
-                                    direction *= -1.0;
+                                    direction.x *= -1.0;
                                 }
                                 direction
                             },
@@ -168,12 +192,18 @@ fn process_behavior(
                             if killables_entity == entity || killable.killed {
                                 None
                             } else {
-                                let direction_to_killable = project_by_normal(
+                                let vector_to_killable = project_by_normal(
                                     killable_transform.translation() - rifle_position,
                                     Vec3::Y,
-                                )
-                                .normalize_or_zero();
-                                Some(direction_to_killable)
+                                );
+                                if vector_to_killable.length() < MIN_DISTANCE_FOR_SHOOTING {
+                                    // To close, don't kill that one
+                                    None
+                                } else {
+                                    let direction_to_killable =
+                                        vector_to_killable.normalize_or_zero();
+                                    Some(direction_to_killable)
+                                }
                             }
                         })
                         .min_by_key(|direction_to_killable| {

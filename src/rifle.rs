@@ -3,10 +3,12 @@ use std::f32::consts::PI;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use bevy_turborand::prelude::*;
+use float_ord::FloatOrd;
 
 use crate::arena::Ground;
 use crate::level_reloading::{CleanOnLevelReload, LevelPopulationSet};
 use crate::menu::AppState;
+use crate::player::IsPlayer;
 use crate::utils::entities_ordered_by_type;
 use crate::{collision_groups, ShootingSequenceSet};
 
@@ -21,7 +23,10 @@ impl Plugin for RiflePlugin {
                 .in_set(LevelPopulationSet)
         });
 
-        app.add_systems((handle_rifle_collisions, pose_rifle).in_set(OnUpdate(AppState::Game)));
+        app.add_systems(
+            (handle_rifle_collisions, pose_rifle, attract_to_player)
+                .in_set(OnUpdate(AppState::Game)),
+        );
         app.add_system(handle_shooting.in_set(ShootingSequenceSet::RifleRecoil));
     }
 }
@@ -185,5 +190,25 @@ fn handle_shooting(
             15.0 * rng.f32_normalized(),
         ));
         velocity.angvel = Quat::from_axis_angle(rotation.mul_vec3(Vec3::X), -PI).xyz() * 5.0;
+    }
+}
+
+fn attract_to_player(
+    mut rifles_query: Query<(&RifleStatus, &GlobalTransform, &mut Velocity)>,
+    players_query: Query<&GlobalTransform, With<IsPlayer>>,
+) {
+    for (rifle_status, rifle_transform, mut rifle_velocity) in rifles_query.iter_mut() {
+        if !matches!(rifle_status, RifleStatus::Ragdoll) {
+            continue;
+        }
+        let rifle_position = rifle_transform.translation();
+        let vec_to_player = players_query
+            .iter()
+            .map(|player_transform| player_transform.translation() - rifle_position)
+            .min_by_key(|v| FloatOrd(v.length_recip()));
+        let Some(vec_to_player) = vec_to_player else { continue };
+        if vec_to_player.length() < 10.0 {
+            rifle_velocity.linvel = 10.0 * vec_to_player;
+        }
     }
 }

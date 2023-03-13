@@ -68,7 +68,7 @@ fn setup_player(mut commands: Commands, asset_server: Res<AssetServer>) {
     cmd.insert(TnuaPlatformerBundle::new_with_config(
         TnuaPlatformerConfig {
             full_speed: 40.0,
-            full_jump_height: 4.0,
+            full_jump_height: 6.0,
             up: Vec3::Y,
             forward: -Vec3::Z,
             float_height: 2.0,
